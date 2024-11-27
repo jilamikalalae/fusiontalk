@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-  Home,
+  Bell,
   LineChart,
   Package,
   Package2,
@@ -70,24 +70,20 @@ function DesktopNav() {
           <span className="sr-only">Acme Inc</span>
         </Link>
 
-        <NavItem href="#" label="Dashboard">
-          <Home className="h-5 w-5" />
+        <NavItem href="#" label="Notification">
+          <Bell className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="#" label="Orders">
-          <ShoppingCart className="h-5 w-5" />
+        <NavItem href="#" label="Line">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="/" label="Products">
-          <Package className="h-5 w-5" />
+        <NavItem href="/" label="Messenger">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png" className="h-5 w-5" />
         </NavItem>
 
         <NavItem href="/customers" label="Customers">
           <Users2 className="h-5 w-5" />
-        </NavItem>
-
-        <NavItem href="#" label="Analytics">
-          <LineChart className="h-5 w-5" />
         </NavItem>
 
         <NavItem href="#" label="Analytics">
@@ -134,14 +130,14 @@ function MobileNav() {
             href="#"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <Home className="h-5 w-5" />
-            Dashboard
+        <Bell className="h-5 w-5" />
+            Notification
           </Link>
           <Link
             href="#"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <ShoppingCart className="h-5 w-5" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" className="h-5 w-5" />
             Orders
           </Link>
           <Link
