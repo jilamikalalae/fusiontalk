@@ -23,16 +23,9 @@ interface ChatMessage {
 }
 
 const inboxMessages: Message[] = [
-  { id: 1, name: "Boom", preview: "You: Typing...", time: "Now", isUnread: true },
-  { id: 2, name: "Jason", preview: "Send a picture", time: "Now" },
-  { id: 3, name: "Numsom", preview: "Send a sticker", time: "3m" },
-  { id: 4, name: "Dannie", preview: "Thanks", time: "7m" },
-  { id: 5, name: "Adam", preview: "OK", time: "8m" },
 ];
 
 const chatMessages: ChatMessage[] = [
-  { id: 1, sender: "recipient", text: "Can you check my order process? I ordered a red bag yesterday via LINE. Name Boomwww.", time: "12:31" },
-  { id: 2, sender: "user", text: "OK. Your order number is #41000. It is in the middle of the packing process.", time: "12:31" },
 ];
 
 const CustomersPage: React.FC = () => {
@@ -72,10 +65,6 @@ const CustomersPage: React.FC = () => {
       {/* Chat Area */}
       <div className="w-3/4 p-6">
         <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Boom</CardTitle>
-            <CardDescription>12:31</CardDescription>
-          </CardHeader>
           <CardContent className="flex flex-col h-full justify-between">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4">
@@ -103,7 +92,7 @@ const CustomersPage: React.FC = () => {
             <div className="flex items-center space-x-3 border-t p-3">
               <input
                 type="text"
-                placeholder="Do you have any problem?"
+                placeholder="Type here"
                 className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">
