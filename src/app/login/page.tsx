@@ -1,37 +1,40 @@
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { signIn } from '@/lib/auth';
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import bg1 from "@/app/login/bg1.webp";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex justify-center items-start md:items-center p-8">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            This demo uses GitHub for authentication.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter>
-          <form
-            action={async () => {
-              'use server';
-              await signIn('github', {
-                redirectTo: '/'
-              });
-            }}
-            className="w-full"
-          >
-            <Button className="w-full">Sign in with GitHub</Button>
-          </form>
-        </CardFooter>
-      </Card>
+    <div className="w-full max-w-md bg-white shadow-md rounded-lg p-6">
+      <h1 className="text-2xl font-bold text-center mb-6">Create an account</h1>
+
+      <div className="space-y-4">
+        <Button className="w-full bg-red-500 text-white hover:bg-red-600">
+          Continue with Google
+        </Button>
+        <Button className="w-full bg-black text-white hover:bg-gray-800">
+          Continue with Apple
+        </Button>
+        <Button className="w-full bg-gray-100 text-black hover:bg-gray-200">
+          Continue with Email
+        </Button>
+      </div>
+
+      <div className="mt-4">
+        <label className="flex items-center space-x-2 text-sm">
+          <input type="checkbox" />
+          <span>
+            I do not wish to receive news and promotions from this service by email.
+          </span>
+        </label>
+      </div>
+
+      <p className="text-xs text-gray-500 mt-4">
+        By continuing, you agree to our <a href="#" className="text-blue-500">Terms of Use</a> and <a href="#" className="text-blue-500">Privacy Policy</a>.
+      </p>
+
+      <div className="text-center mt-6 text-sm">
+        Already have an account? <a href="#" className="text-blue-500">Log in</a>
+      </div>
     </div>
   );
 }
