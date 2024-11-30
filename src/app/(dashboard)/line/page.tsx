@@ -28,7 +28,7 @@ const inboxMessages: Message[] = [
 const chatMessages: ChatMessage[] = [
 ];
 
-const CustomersPage: React.FC = () => {
+const LinePage: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -92,7 +92,7 @@ const CustomersPage: React.FC = () => {
             <div className="flex items-center space-x-3 border-t p-3">
               <input
                 type="text"
-                placeholder="Type here"
+                placeholder="Type"
                 className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">
@@ -106,4 +106,4 @@ const CustomersPage: React.FC = () => {
   );
 };
 
-export default CustomersPage;
+export default LinePage;

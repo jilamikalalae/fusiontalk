@@ -57,21 +57,23 @@ function DesktopNav() {
           <span className="sr-only">Acme Inc</span>
         </Link>
 
-        <NavItem href="/customers" label="Notification">
+        <NavItem href="/notification" label="Notification">
           <Bell className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="#" label="Line">
+        <NavItem href="/line" label="Line">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="/" label="Messenger">
+        <NavItem href="/messenger" label="Messenger">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png" className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="#" label="Analytics">
+        <NavItem href="/analytics" label="Analytics">
           <LineChart className="h-5 w-5" />
         </NavItem>
+
+
       </nav>
       <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
         <Tooltip>
