@@ -6,7 +6,8 @@ import {
   Package2,
   PanelLeft,
   Settings,
-  Users2
+  Users2,
+  CircleUserRound
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,11 @@ function DesktopNav() {
         <NavItem href="#" label="Analytics">
           <LineChart className="h-5 w-5" />
         </NavItem>
+
+        <NavItem href="/account" label="Account">
+          <CircleUserRound className="h-5 w-5" />
+        </NavItem>
+
       </nav>
       <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
         <Tooltip>
