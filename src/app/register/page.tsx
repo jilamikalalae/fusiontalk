@@ -1,8 +1,18 @@
+"use client"
+
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import bg1 from "@/app/login/bg1.webp";
+import {useState} from "react";
 
 export default function RegisterPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("")
+
+  console.log("Name: ", name);
+
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
       {/* Left side: Background image */}
@@ -31,6 +41,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="text"
+                onChange={(e) => setName(e.target.value)}
                 id="full-name"
                 placeholder="Enter your full name"
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -48,6 +59,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="email"
+                onChange={(e) => setEmail(e.target.value)}
                 id="email"
                 placeholder="Enter your email"
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -65,6 +77,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="password"
+                onChange={(e) => setPassword(e.target.value)}
                 id="password"
                 placeholder="Create a password"
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -88,7 +101,11 @@ export default function RegisterPage() {
                 required
               />
             </div>
-
+            {error && (
+              <div className="bg-red-500 text-white w-fit text-sm py-1 px-3 rounded-md mt-2">
+                {error}
+              </div>
+            )}
             {/* Submit Button */}
             <Button className="w-full bg-blue-500 text-white hover:bg-blue-600">
               Sign Up
