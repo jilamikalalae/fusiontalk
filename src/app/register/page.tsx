@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import bg1 from "@/app/login/bg1.webp";
-import {useState} from "react";
+import React, { FormEvent, useState } from "react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -11,7 +11,34 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("")
 
-  console.log("Name: ", name);
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  
+    if (!name || !email || !password) {
+      setError("All fields are necessary.");
+      return;
+    }
+  
+    try {
+      const res = await fetch('api/register', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+  
+      if (res.ok) {
+        // Explicitly cast e.target to HTMLFormElement
+        const form = e.target as HTMLFormElement;
+        form.reset(); // This will work now
+      } else {
+        console.log("Registration failed.");
+      }
+    } catch (error) {
+      console.log("Error during registration:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
