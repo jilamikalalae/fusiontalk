@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 
 interface IntegratedAccount {
   id: number;
@@ -12,19 +13,30 @@ const integratedAccounts: IntegratedAccount[] = [
     id: 1,
     name: 'Line',
     description: 'Connect your line account.',
-    isConnected: true
+    isConnected: true,
   },
   {
     id: 2,
     name: 'Messenger',
     description: 'Connect your messenger account.',
-    isConnected: true
-  }
+    isConnected: true,
+  },
 ];
 
 const AccountManagementPage: React.FC = () => {
+  const [notifications, setNotifications] = useState({
+    email: true,
+    sms: false,
+    app: true,
+  });
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+
+  const toggleNotification = (type: "email" | "sms" | "app") => {
+    setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
+  };  
+
   return (
-    <div className="bg-white shadow-lg rounded-lg w-full h-full p-6">
+    <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
       {/* Profile Picture */}
       <div className="flex items-center space-x-6 mb-6">
         <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden">
@@ -49,7 +61,7 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Full Name */}
-      <div className="mb-6">
+      <div>
         <p className="font-semibold text-lg">Full name</p>
         <div className="grid grid-cols-2 gap-4 mt-2">
           <input
@@ -66,7 +78,7 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Contact Email */}
-      <div className="mb-6">
+      <div>
         <p className="font-semibold text-lg">Contact email</p>
         <input
           type="email"
@@ -79,7 +91,7 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Password */}
-      <div className="mb-6">
+      <div>
         <p className="font-semibold text-lg">Password</p>
         <div className="grid grid-cols-2 gap-4 mt-2">
           <input
@@ -96,8 +108,8 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Integrated Accounts */}
-      <div className="mb-6">
-        <p className="font-semibold text-lg">Integrated account</p>
+      <div>
+        <p className="font-semibold text-lg">Integrated accounts</p>
         <ul className="mt-4 space-y-4">
           {integratedAccounts.map((account) => (
             <li
@@ -120,6 +132,23 @@ const AccountManagementPage: React.FC = () => {
             </li>
           ))}
         </ul>
+      </div>
+
+     
+
+     
+
+      {/* Account Security */}
+      <div>
+        <p className="font-semibold text-lg">Account Security</p>
+        <div className="mt-4 flex space-x-4">
+          <button className="px-4 py-2 bg-gray-500 text-white rounded-lg">
+            Log out
+          </button>
+          <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+            Delete my account
+          </button>
+        </div>
       </div>
     </div>
   );
