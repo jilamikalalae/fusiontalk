@@ -1,6 +1,7 @@
-import NextAuth from 'next-auth';
-import GitHub from 'next-auth/providers/github';
-
+import NextAuth from "next-auth"
+import Credentials from "next-auth/providers/credentials"
+import bcrypt from "bcrypt.js"; 
+ 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [GitHub]
-});
+  providers: [],
+})
