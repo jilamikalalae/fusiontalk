@@ -51,10 +51,10 @@ const AccountManagementPage: React.FC = () => {
           <p className="font-semibold text-lg">Profile picture</p>
           <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
           <div className="mt-2 flex space-x-2">
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">
+            <button className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
               Upload
             </button>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+            <button className="px-4 py-2 bg-gray-200 text-black rounded-lg">
               Delete
             </button>
           </div>
@@ -86,7 +86,7 @@ const AccountManagementPage: React.FC = () => {
           placeholder="Email address"
           className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button className="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg">
+        <button className="mt-3 px-4 py-2 border-2 border-gray-300 bg-white text-black  rounded-lg">
           Add another email
         </button>
       </div>
@@ -143,10 +143,10 @@ const AccountManagementPage: React.FC = () => {
       <div>
         <p className="font-semibold text-lg">Account Security</p>
         <div className="mt-4 flex space-x-4">
-          <button className="px-4 py-2 bg-gray-500 text-white rounded-lg">
+          <button className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
             Log out
           </button>
-          <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+          <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg">
             Delete my account
           </button>
         </div>
