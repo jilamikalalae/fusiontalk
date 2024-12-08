@@ -13,7 +13,7 @@ const integratedAccounts: IntegratedAccount[] = [
     id: 1,
     name: 'Line',
     description: 'Connect your line account.',
-    isConnected: true,
+    isConnected: false,
   },
   {
     id: 2,
@@ -32,8 +32,9 @@ const AccountManagementPage: React.FC = () => {
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
   const toggleNotification = (type: "email" | "sms" | "app") => {
-    setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
-  };  
+  setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
+};
+
 
   return (
     <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
@@ -121,12 +122,12 @@ const AccountManagementPage: React.FC = () => {
                 <p className="text-sm text-gray-500">{account.description}</p>
               </div>
               <button
-                className={`px-4 py-2 rounded-lg ${
-                  account.isConnected
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-300 text-gray-700'
-                }`}
-              >
+          className={`px-4 py-2 rounded-lg border-2 ${
+            account.isConnected
+              ? 'border-gray-300 text-gray-700 bg-white'
+              : 'border-green-500 text-green-500 bg-white'
+          }`}
+        >
                 {account.isConnected ? 'Connected' : 'Connect'}
               </button>
             </li>
