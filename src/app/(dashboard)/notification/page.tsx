@@ -39,6 +39,13 @@ const NotiPage: React.FC = () => {
             <CardDescription>Newest ↑</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <input
+                type="search"
+                placeholder="Search contacts..."
+                className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             <ul className="space-y-3">
               {inboxMessages.map((message) => (
                 <li

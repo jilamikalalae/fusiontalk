@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -6,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 
 interface Message {
   id: number;
@@ -23,12 +26,44 @@ interface ChatMessage {
 }
 
 const inboxMessages: Message[] = [
+  {
+    id: 1,
+    name: "John Doe",
+    preview: "Hey, how are you?",
+    time: "10:30 AM",
+    isUnread: true,
+  },
+  {
+    id: 2,
+    name: "Jane Smith",
+    preview: "Meeting at 2 PM",
+    time: "9:45 AM",
+  },
+  {
+    id: 3,
+    name: "Mike Johnson",
+    preview: "Please check the docs",
+    time: "Yesterday",
+  },
+  {
+    id: 4,
+    name: "Sarah Wilson",
+    preview: "Thanks for your help!",
+    time: "Yesterday",
+    isUnread: true,
+  },
 ];
 
 const chatMessages: ChatMessage[] = [
 ];
 
 const MessengerPage: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredMessages = inboxMessages.filter((message) =>
+    message.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -39,8 +74,17 @@ const MessengerPage: React.FC = () => {
             <CardDescription>Newest ↑</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <input
+                type="search"
+                placeholder="Search contacts..."
+                className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
             <ul className="space-y-3">
-              {inboxMessages.map((message) => (
+              {filteredMessages.map((message) => (
                 <li
                   key={message.id}
                   className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
