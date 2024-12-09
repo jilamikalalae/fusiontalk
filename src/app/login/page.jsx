@@ -2,33 +2,35 @@
 
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-
-      const res = await signIn("Credentials",{
-        email, password, redirect: false
-      })
+      const res = await signIn('Credentials', {
+        email,
+        password,
+        redirect: false, // Prevent automatic redirection
+        callbackUrl: '/' // Optional: Set your desired callback URL
+      });
 
       if (res.error) {
-        setError("Invalid credentials")
+        setError('Invalid credentials'); // Show error message
+      } else {
+        router.replace('/account'); // Redirect to the `/account` page
       }
-
-      router.replace("");
-
-    } catch(error) {
-      console.log(error)
+    } catch (error) {
+      console.error('Sign-in error:', error);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -38,7 +40,10 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email Address
             </label>
             <input
@@ -47,14 +52,16 @@ export default function LoginPage() {
               id="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
@@ -63,7 +70,6 @@ export default function LoginPage() {
               id="password"
               placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
@@ -72,7 +78,10 @@ export default function LoginPage() {
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           <div className="text-right">
-            <a href="/forgot-password" className="text-sm text-blue-500 hover:underline">
+            <a
+              href="/forgot-password"
+              className="text-sm text-blue-500 hover:underline"
+            >
               Forgot Password?
             </a>
           </div>
@@ -103,6 +112,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-};
-
-export default LoginPage;
+}
