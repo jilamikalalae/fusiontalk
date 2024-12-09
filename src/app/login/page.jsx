@@ -1,17 +1,41 @@
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+
+      const res = await signIn("Credentials",{
+        email, password, redirect: false
+      })
+
+      if (res.error) {
+        setError("Invalid credentials")
+      }
+
+      router.replace("");
+
+    } catch(error) {
+      console.log(error)
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold text-center mb-6">Sign In</h1>
 
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
             <label
@@ -21,6 +45,7 @@ export default function LoginPage() {
               Email Address
             </label>
             <input
+              onChange={(e) => setEmail(e.target.value)}
               type="email"
               id="email"
               placeholder="Enter your email"
@@ -38,6 +63,7 @@ export default function LoginPage() {
               Password
             </label>
             <input
+              onChange={(e) => setPassword(e.target.value)}
               type="password"
               id="password"
               placeholder="Enter your password"
@@ -56,6 +82,12 @@ export default function LoginPage() {
             </a>
           </div>
 
+          {error && (
+            <div className="bg-red-500 text-white text-sm py-2 px-4 rounded-md">
+              {error}
+            </div>
+          )}
+
           {/* Sign In Button */}
           <Button className="w-full bg-blue-500 text-white hover:bg-blue-600">
             Sign In
@@ -63,14 +95,12 @@ export default function LoginPage() {
         </form>
 
         {/* Opt-Out Checkbox */}
-    
 
         {/* Terms and Privacy */}
-        
 
         {/* Register Redirect */}
         <div className="text-center mt-6 text-sm">
-          Don't have an account?{" "}
+          Don't have an account?{' '}
           <a href="/register" className="text-blue-500">
             Sign Up
           </a>

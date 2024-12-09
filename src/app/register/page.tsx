@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,7 +40,7 @@ export default function RegisterPage() {
         setEmail("");
         setPassword("");
         setConfirmPassword("");
-        alert("User registered successfully!");
+        setSuccess("User registered successfully!");
       } else {
         setError(response.message || "Registration failed.");
       }
@@ -147,6 +148,12 @@ export default function RegisterPage() {
             {error && (
               <div className="bg-red-500 text-white text-sm py-2 px-4 rounded-md">
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-500 text-white text-sm py-2 px-4 rounded-md">
+                {success}
               </div>
             )}
 
