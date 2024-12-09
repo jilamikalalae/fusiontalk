@@ -9,23 +9,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await signIn('Credentials', {
+      const res = await signIn('credentials', {
         email,
         password,
         redirect: false, // Prevent automatic redirection
-        callbackUrl: '/' // Optional: Set your desired callback URL
       });
 
       if (res.error) {
         setError('Invalid credentials'); // Show error message
       } else {
-        router.replace('/account'); // Redirect to the `/account` page
+        router.replace("account"); // Redirect to the `/account` page
       }
     } catch (error) {
       console.error('Sign-in error:', error);
