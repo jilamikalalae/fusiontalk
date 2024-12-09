@@ -1,5 +1,9 @@
-'use client';
+"use client";
+
 import React, { useState } from 'react';
+import { signOut } from 'next-auth/react';
+import { useSession } from "next-auth/react";
+
 
 interface IntegratedAccount {
   id: number;
@@ -33,7 +37,12 @@ const AccountManagementPage: React.FC = () => {
 
   const toggleNotification = (type: "email" | "sms" | "app") => {
     setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
-  };  
+  };
+
+  const { data: session } = useSession();
+  console.log(session)
+
+
 
   return (
     <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
@@ -142,7 +151,7 @@ const AccountManagementPage: React.FC = () => {
       <div>
         <p className="font-semibold text-lg">Account Security</p>
         <div className="mt-4 flex space-x-4">
-          <button className="px-4 py-2 bg-gray-500 text-white rounded-lg">
+          <button  onClick={() => signOut()} className="px-4 py-2 bg-gray-500 text-white rounded-lg">
             Log out
           </button>
           <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
