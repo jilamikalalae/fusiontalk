@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import bg1 from "@/app/login/bg1.webp";
 import React, { FormEvent, useState } from "react";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -12,6 +14,10 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const { data: session } = useSession();
+
+  if (session) redirect("/");
 
   const handleSubmit = async (e) => {
     e.preventDefault();

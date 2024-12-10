@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { useSession } from "next-auth/react";
+import { redirect } from 'next/navigation';
 
 
 interface IntegratedAccount {
@@ -40,7 +41,8 @@ const AccountManagementPage: React.FC = () => {
   };
 
   const { data: session } = useSession();
-  console.log(session)
+  
+  if (!session) redirect("/login");
 
 
 

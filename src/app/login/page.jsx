@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,6 +13,10 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   
   const router = useRouter();
+
+  const { data: session } = useSession();
+
+  if (session) router.replace("/");
 
   const handleSubmit = async (e) => {
     e.preventDefault();

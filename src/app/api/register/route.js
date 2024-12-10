@@ -3,13 +3,10 @@ import { connectMongoDB } from "../../../lib/mongodb";
 import User from "../../../models/user";
 import bcrypt from "bcryptjs";
 
+
 export async function POST(req) {
   try {
     const { name, email, password } = await req.json();
-    
-    console.log(name)
-    console.log(email)
-    console.log(password)
 
     if (!name || !email || !password) {
       return NextResponse.json(

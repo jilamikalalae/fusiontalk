@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 interface Message {
   id: number;
@@ -36,6 +38,11 @@ const chatMessages: ChatMessage[] = [
 
 const MessengerPage: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
+  const { data: session } = useSession();
+  
+  if (!session) redirect("/login");
+
 
   return (
     <div className="flex h-screen bg-gray-100 sm:pl-14">
