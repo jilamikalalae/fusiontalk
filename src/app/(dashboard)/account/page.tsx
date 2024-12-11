@@ -1,5 +1,30 @@
 'use client';
 import React, { useState } from 'react';
+import LineConnect from '@/components/account/lineConnect';
+import {
+  Modal,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Link,
+  SxProps,
+  Theme
+} from '@mui/material';
+
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  borderRadius: '8px',
+  boxShadow: 24,
+  p: 4
+} as SxProps<Theme>;
 
 interface IntegratedAccount {
   id: number;
@@ -13,27 +38,31 @@ const integratedAccounts: IntegratedAccount[] = [
     id: 1,
     name: 'Line',
     description: 'Connect your line account.',
-    isConnected: true,
+    isConnected: false
   },
   {
     id: 2,
     name: 'Messenger',
     description: 'Connect your messenger account.',
-    isConnected: true,
-  },
+    isConnected: true
+  }
 ];
 
 const AccountManagementPage: React.FC = () => {
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,
-    app: true,
+    app: true
   });
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
-  const toggleNotification = (type: "email" | "sms" | "app") => {
+  const toggleNotification = (type: 'email' | 'sms' | 'app') => {
     setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
-  };  
+  };
+
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
     <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
@@ -50,10 +79,10 @@ const AccountManagementPage: React.FC = () => {
           <p className="font-semibold text-lg">Profile picture</p>
           <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
           <div className="mt-2 flex space-x-2">
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">
+            <button className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
               Upload
             </button>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+            <button className="px-4 py-2 bg-gray-200 text-black rounded-lg">
               Delete
             </button>
           </div>
@@ -85,7 +114,7 @@ const AccountManagementPage: React.FC = () => {
           placeholder="Email address"
           className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button className="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg">
+        <button className="mt-3 px-4 py-2 border-2 border-gray-300 bg-white text-black  rounded-lg">
           Add another email
         </button>
       </div>
@@ -121,10 +150,11 @@ const AccountManagementPage: React.FC = () => {
                 <p className="text-sm text-gray-500">{account.description}</p>
               </div>
               <button
-                className={`px-4 py-2 rounded-lg ${
+                onClick={handleOpen}
+                className={`px-4 py-2 rounded-lg border-2 ${
                   account.isConnected
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-300 text-gray-700'
+                    ? 'border-gray-300 text-gray-700 bg-white'
+                    : 'border-green-500 text-green-500 bg-white'
                 }`}
               >
                 {account.isConnected ? 'Connected' : 'Connect'}
@@ -134,22 +164,76 @@ const AccountManagementPage: React.FC = () => {
         </ul>
       </div>
 
-     
-
-     
-
       {/* Account Security */}
       <div>
         <p className="font-semibold text-lg">Account Security</p>
         <div className="mt-4 flex space-x-4">
-          <button className="px-4 py-2 bg-gray-500 text-white rounded-lg">
+          <button className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
             Log out
           </button>
-          <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
+          <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg">
             Delete my account
           </button>
         </div>
       </div>
+      <LineConnect requestOpen={open} onClose={handleClose}/>
+      {/* <div>
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-title"
+          aria-describedby="modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="modal-title" variant="h6" component="h2">
+              Sign in to our platform
+            </Typography>
+            <Box component="form" sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                label="Your email"
+                type="email"
+                variant="outlined"
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Your password"
+                type="password"
+                variant="outlined"
+                margin="normal"
+              />
+              <FormControlLabel control={<Checkbox />} label="Remember me" />
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mt: 1
+                }}
+              >
+                <Link href="#" underline="hover">
+                  Lost Password?
+                </Link>
+              </Box>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                sx={{ mt: 2 }}
+              >
+                Login to your account
+              </Button>
+              <Typography variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
+                Not registered?{' '}
+                <Link href="#" underline="hover">
+                  Create account
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Modal>
+      </div> */}
     </div>
   );
 };
