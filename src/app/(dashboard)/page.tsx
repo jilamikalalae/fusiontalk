@@ -1,12 +1,23 @@
+"use client"; // Ensure this is a client component
+
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default async function ProductsPage(
-  props: {
-    searchParams: Promise<{ q: string; offset: string }>;
-  }
-) {
+export default function ProductsPage(props: { searchParams: { q: string; offset: string } }) {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!session) {
+      router.push("/login"); 
+    }
+  }, [session, router]);
+
+  if (!session) return null; // Prevent rendering before session check
 
   return (
     <Tabs defaultValue="all">
