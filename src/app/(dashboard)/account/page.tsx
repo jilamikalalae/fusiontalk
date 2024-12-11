@@ -89,10 +89,10 @@ const AccountManagementPage: React.FC = () => {
           <p className="font-semibold text-lg">Profile picture</p>
           <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
           <div className="mt-2 flex space-x-2">
-            <button className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
+            <button className="px-4 py-2 border-2 border-blue-500 bg-white text-black rounded-lg">
               Upload
             </button>
-            <button className="px-4 py-2 bg-gray-200 text-black rounded-lg">
+            <button className="px-4 py-2 bg-green-500 text-white rounded-lg">
               Delete
             </button>
           </div>
