@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -28,7 +29,13 @@ const inboxMessages: Message[] = [
 const chatMessages: ChatMessage[] = [
 ];
 
-const CustomersPage: React.FC = () => {
+const LinePage: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredMessages = inboxMessages.filter((message) =>
+    message.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -39,8 +46,17 @@ const CustomersPage: React.FC = () => {
             <CardDescription>Newest ↑</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <input
+                type="search"
+                placeholder="Search contacts..."
+                className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
             <ul className="space-y-3">
-              {inboxMessages.map((message) => (
+              {filteredMessages.map((message) => (
                 <li
                   key={message.id}
                   className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
@@ -92,7 +108,7 @@ const CustomersPage: React.FC = () => {
             <div className="flex items-center space-x-3 border-t p-3">
               <input
                 type="text"
-                placeholder="Type here"
+                placeholder="Type"
                 className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">
@@ -106,4 +122,4 @@ const CustomersPage: React.FC = () => {
   );
 };
 
-export default CustomersPage;
+export default LinePage;
