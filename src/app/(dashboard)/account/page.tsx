@@ -1,5 +1,10 @@
-'use client';
+"use client";
+
 import React, { useState } from 'react';
+import { signOut } from 'next-auth/react';
+import { useSession } from "next-auth/react";
+import { redirect } from 'next/navigation';
+
 import LineConnect from '@/components/account/lineConnect';
 import {
   Modal,
@@ -59,6 +64,11 @@ const AccountManagementPage: React.FC = () => {
   const toggleNotification = (type: 'email' | 'sms' | 'app') => {
     setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
   };
+
+  const { data: session } = useSession();
+  
+  if (!session) redirect("/login");
+
 
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -168,7 +178,7 @@ const AccountManagementPage: React.FC = () => {
       <div>
         <p className="font-semibold text-lg">Account Security</p>
         <div className="mt-4 flex space-x-4">
-          <button className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
+          <button onClick={() => signOut()} className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
             Log out
           </button>
           <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg">
