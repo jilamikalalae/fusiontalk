@@ -7,34 +7,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-interface Message {
-  id: number;
-  name: string;
-  preview: string;
-  time: string;
-  isUnread?: boolean;
-}
-
-interface ChatMessage {
-  id: number;
-  sender: "user" | "recipient";
-  text: string;
-  time: string;
-}
-
-const inboxMessages: Message[] = [
-];
-
-const chatMessages: ChatMessage[] = [
-];
+import { inboxMessages, chatMessagesData, type Message, type ChatMessage } from "@/lib/store/messages";
 
 const LinePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedContact, setSelectedContact] = useState<Message | null>(null);
 
-  const filteredMessages = inboxMessages.filter((message) =>
-    message.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMessages = inboxMessages
+    .filter((message) => message.type === "line")
+    .filter((message) => 
+      message.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -84,24 +67,28 @@ const LinePage: React.FC = () => {
           <CardContent className="flex flex-col h-full justify-between">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4">
-              {chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${
-                    msg.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+              {selectedContact && chatMessagesData[selectedContact.id] ? (
+                chatMessagesData[selectedContact.id].map((msg) => (
                   <div
-                    className={`max-w-sm p-3 rounded-lg ${
-                      msg.sender === "user"
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200"
+                    key={msg.id}
+                    className={`flex ${
+                      msg.sender === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {msg.text}
+                    <div
+                      className={`max-w-sm p-3 rounded-lg ${
+                        msg.sender === "user"
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-200"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center text-gray-500">No messages yet</div>
+              )}
             </div>
 
             {/* Input Box */}

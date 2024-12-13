@@ -8,64 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-interface Message {
-  id: number;
-  name: string;
-  preview: string;
-  time: string;
-  isUnread?: boolean;
-}
-
-interface ChatMessage {
-  id: number;
-  sender: "user" | "recipient";
-  text: string;
-  time: string;
-  status?: "sending" | "sent" | "delivered" | "read";
-}
-
-const inboxMessages: Message[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    preview: "Hey, how are you?",
-    time: "10:30 AM",
-    isUnread: true,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    preview: "Meeting at 2 PM",
-    time: "9:45 AM",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    preview: "Please check the docs",
-    time: "Yesterday",
-  },
-  {
-    id: 4,
-    name: "Sarah Wilson",
-    preview: "Thanks for your help!",
-    time: "Yesterday",
-    isUnread: true,
-  },
-];
-
-const chatMessagesData: Record<number, ChatMessage[]> = {
-  1: [
-    { id: 1, sender: "recipient", text: "Hey, how are you?", time: "10:30 AM" },
-    { id: 2, sender: "user", text: "I'm good, thanks! How about you?", time: "10:31 AM" },
-    { id: 3, sender: "recipient", text: "Doing great! Want to grab lunch?", time: "10:32 AM" },
-  ],
-  2: [
-    { id: 1, sender: "recipient", text: "Meeting at 2 PM", time: "9:45 AM" },
-    { id: 2, sender: "user", text: "Sure, I'll be there", time: "9:46 AM" },
-  ],
-  // Add more chat histories for other contacts...
-};
+import { inboxMessages, chatMessagesData, type Message, type ChatMessage } from "@/lib/store/messages";
 
 const MessengerPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -153,9 +96,11 @@ const MessengerPage: React.FC = () => {
     }, 2000);
   };
 
-  const filteredMessages = inboxMessages.filter((message) =>
-    message.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMessages = inboxMessages
+    .filter((message) => message.type === "messenger")
+    .filter((message) => 
+      message.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -222,38 +167,42 @@ const MessengerPage: React.FC = () => {
 
               <CardContent className="flex flex-col h-[calc(100%-80px)] justify-between">
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-4 p-4">
-                  {chatMessages[selectedContact.id]?.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${
-                        msg.sender === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
+                <div className="flex-1 overflow-y-auto space-y-4">
+                  {selectedContact && chatMessagesData[selectedContact.id] ? (
+                    chatMessagesData[selectedContact.id].map((msg) => (
                       <div
-                        className={`max-w-sm p-3 rounded-lg ${
-                          msg.sender === "user"
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200"
+                        key={msg.id}
+                        className={`flex ${
+                          msg.sender === "user" ? "justify-end" : "justify-start"
                         }`}
                       >
-                        <p>{msg.text}</p>
-                        <div className="flex items-center justify-end space-x-1 text-xs mt-1">
-                          <span className="opacity-70">{msg.time}</span>
-                          {msg.sender === "user" && msg.status && (
-                            <span className="opacity-70">
-                              {msg.status === "sending" && "●"}
-                              {msg.status === "sent" && "✓"}
-                              {msg.status === "delivered" && "✓✓"}
-                              {msg.status === "read" && (
-                                <span className="text-blue-300">✓✓</span>
-                              )}
-                            </span>
-                          )}
+                        <div
+                          className={`max-w-sm p-3 rounded-lg ${
+                            msg.sender === "user"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-200"
+                          }`}
+                        >
+                          <p>{msg.text}</p>
+                          <div className="flex items-center justify-end space-x-1 text-xs mt-1">
+                            <span className="opacity-70">{msg.time}</span>
+                            {msg.sender === "user" && msg.status && (
+                              <span className="opacity-70">
+                                {msg.status === "sending" && "●"}
+                                {msg.status === "sent" && "✓"}
+                                {msg.status === "delivered" && "✓✓"}
+                                {msg.status === "read" && (
+                                  <span className="text-blue-300">✓✓</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500">No messages yet</div>
+                  )}
                   {isTyping && selectedContact && (
                     <div className="flex justify-start">
                       <div className="bg-gray-200 p-3 rounded-lg">

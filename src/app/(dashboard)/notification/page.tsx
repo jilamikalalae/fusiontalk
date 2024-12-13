@@ -195,25 +195,29 @@ const NotiPage: React.FC = () => {
               <CardContent className="flex flex-col h-[calc(100%-80px)] justify-between">
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto space-y-4 p-4">
-                  {chatMessagesData[selectedContact.id]?.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${
-                        msg.sender === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
+                  {selectedContact && chatMessagesData[selectedContact.id] ? (
+                    chatMessagesData[selectedContact.id].map((msg) => (
                       <div
-                        className={`max-w-sm p-3 rounded-lg ${
-                          msg.sender === "user"
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200"
+                        key={msg.id}
+                        className={`flex ${
+                          msg.sender === "user" ? "justify-end" : "justify-start"
                         }`}
                       >
-                        <p>{msg.text}</p>
-                        <p className="text-xs mt-1 opacity-70">{msg.time}</p>
+                        <div
+                          className={`max-w-sm p-3 rounded-lg ${
+                            msg.sender === "user"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-200"
+                          }`}
+                        >
+                          <p>{msg.text}</p>
+                          <p className="text-xs mt-1 opacity-70">{msg.time}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500">No messages yet</div>
+                  )}
                 </div>
 
                 {/* Input Box */}
