@@ -4,12 +4,7 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  SxProps,
-  Theme
+  Button
 } from '@mui/material';
 
 const style = {
@@ -19,71 +14,78 @@ const style = {
   transform: 'translate(-50%, -50%)',
   width: 400,
   bgcolor: 'background.paper',
-  border: '2px solid #000',
   boxShadow: 24,
-  p: 4
+  p: 4, 
+  borderRadius: 4
 };
 
-interface Request {
-    requestOpen: boolean;
-    onClose: () => void;  
+interface LineConnectProps {
+  className?: string;
+  children?: React.ReactNode;
+  onConnectionChange?: (connected: boolean) => void;
+  isConnected?: boolean;
 }
 
-export default function LineConnect({requestOpen,onClose}: Request) {
+export default function LineConnect({ 
+  className, 
+  children, 
+  onConnectionChange,
+  isConnected 
+}: LineConnectProps) {
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleConnect = () => {
+    // Add your Line connection logic here
+    if (onConnectionChange) {
+      onConnectionChange(true);
+    }
+    handleClose();
+  };
+
   return (
     <div>
+      <button 
+        onClick={handleOpen}
+        className={className || "px-4 py-2 rounded-lg border-2 border-green-500 text-green-500 bg-white"}
+      >
+        {children || (isConnected ? "Connected" : "Connect")}
+      </button>
       <Modal
-        open={requestOpen}
-        onClose={onClose}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Typography id="modal-title" variant="h6" component="h2">
-            Sign in to our platform
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Connect your Line Official Account
           </Typography>
           <Box component="form" sx={{ mt: 2 }}>
             <TextField
               fullWidth
-              label="Your email"
-              type="email"
+              label="Your channel access token"
+              type="text"
               variant="outlined"
               margin="normal"
             />
             <TextField
               fullWidth
-              label="Your password"
-              type="password"
+              label="Your channel secret token"
+              type="text"
               variant="outlined"
               margin="normal"
             />
-            <FormControlLabel control={<Checkbox />} label="Remember me" />
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mt: 1
-              }}
-            >
-              <Link href="#" underline="hover">
-                Lost Password?
-              </Link>
-            </Box>
             <Button
               fullWidth
               variant="contained"
               color="primary"
               sx={{ mt: 2 }}
+              onClick={handleConnect}
             >
-              Login to your account
+              Connect
             </Button>
-            <Typography variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
-              Not registered?{' '}
-              <Link href="#" underline="hover">
-                Create account
-              </Link>
-            </Typography>
           </Box>
         </Box>
       </Modal>

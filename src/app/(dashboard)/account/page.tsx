@@ -38,21 +38,6 @@ interface IntegratedAccount {
   isConnected: boolean;
 }
 
-const integratedAccounts: IntegratedAccount[] = [
-  {
-    id: 1,
-    name: 'Line',
-    description: 'Connect your line account.',
-    isConnected: false
-  },
-  {
-    id: 2,
-    name: 'Messenger',
-    description: 'Connect your messenger account.',
-    isConnected: true
-  }
-];
-
 const AccountManagementPage: React.FC = () => {
   const [notifications, setNotifications] = useState({
     email: true,
@@ -73,6 +58,31 @@ const AccountManagementPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const [integratedAccounts, setIntegratedAccounts] = useState<IntegratedAccount[]>([
+    {
+      id: 1,
+      name: 'Line',
+      description: 'Connect your line account.',
+      isConnected: false
+    },
+    {
+      id: 2,
+      name: 'Messenger',
+      description: 'Connect your messenger account.',
+      isConnected: true
+    }
+  ]);
+
+  const handleConnectionChange = (accountId: number, connected: boolean) => {
+    setIntegratedAccounts(accounts => 
+      accounts.map(account => 
+        account.id === accountId 
+          ? { ...account, isConnected: connected }
+          : account
+      )
+    );
+  };
 
   return (
     <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
@@ -159,16 +169,29 @@ const AccountManagementPage: React.FC = () => {
                 <p className="font-medium">{account.name}</p>
                 <p className="text-sm text-gray-500">{account.description}</p>
               </div>
-              <button
-                onClick={handleOpen}
-                className={`px-4 py-2 rounded-lg border-2 ${
-                  account.isConnected
-                    ? 'border-gray-300 text-gray-700 bg-white'
-                    : 'border-green-500 text-green-500 bg-white'
-                }`}
-              >
-                {account.isConnected ? 'Connected' : 'Connect'}
-              </button>
+              {account.name === 'Line' ? (
+                <LineConnect 
+                  className={`px-4 py-2 rounded-lg border-2 ${
+                    account.isConnected
+                      ? 'border-green-500 text-green-500 bg-white'
+                      : 'border-gray-300 text-gray-700 bg-white'
+                  }`}
+                  onConnectionChange={(connected) => handleConnectionChange(account.id, connected)}
+                  isConnected={account.isConnected}
+                >
+                  {account.isConnected ? 'Connected' : 'Connect'}
+                </LineConnect>
+              ) : (
+                <button
+                  className={`px-4 py-2 rounded-lg border-2 ${
+                    account.isConnected
+                      ? 'border-green-500 text-green-500 bg-white'
+                      : 'border-gray-300 text-gray-700 bg-white'
+                  }`}
+                >
+                  {account.isConnected ? 'Connected' : 'Connect'}
+                </button>
+              )}
             </li>
           ))}
         </ul>
@@ -186,64 +209,6 @@ const AccountManagementPage: React.FC = () => {
           </button>
         </div>
       </div>
-      <LineConnect requestOpen={open} onClose={handleClose}/>
-      {/* <div>
-        <Modal
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="modal-title"
-          aria-describedby="modal-description"
-        >
-          <Box sx={style}>
-            <Typography id="modal-title" variant="h6" component="h2">
-              Sign in to our platform
-            </Typography>
-            <Box component="form" sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Your email"
-                type="email"
-                variant="outlined"
-                margin="normal"
-              />
-              <TextField
-                fullWidth
-                label="Your password"
-                type="password"
-                variant="outlined"
-                margin="normal"
-              />
-              <FormControlLabel control={<Checkbox />} label="Remember me" />
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mt: 1
-                }}
-              >
-                <Link href="#" underline="hover">
-                  Lost Password?
-                </Link>
-              </Box>
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                sx={{ mt: 2 }}
-              >
-                Login to your account
-              </Button>
-              <Typography variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
-                Not registered?{' '}
-                <Link href="#" underline="hover">
-                  Create account
-                </Link>
-              </Typography>
-            </Box>
-          </Box>
-        </Modal>
-      </div> */}
     </div>
   );
 };
