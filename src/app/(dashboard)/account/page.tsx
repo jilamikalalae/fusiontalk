@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { useSession } from "next-auth/react";
 import { redirect } from 'next/navigation';
+import { PencilLine } from 'lucide-react';
 
 import LineConnect from '@/components/account/lineConnect';
 import {
@@ -99,10 +100,10 @@ const AccountManagementPage: React.FC = () => {
           <p className="font-semibold text-lg">Profile picture</p>
           <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
           <div className="mt-2 flex space-x-2">
-            <button className="px-4 py-2 border-2 border-blue-500 bg-white text-black rounded-lg">
+            <button className="px-4 py-2  bg-gray-300 text-blue-500 rounded-lg">
               Upload
             </button>
-            <button className="px-4 py-2 bg-green-500 text-white rounded-lg">
+            <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
               Delete
             </button>
           </div>
@@ -134,25 +135,23 @@ const AccountManagementPage: React.FC = () => {
           placeholder="Email address"
           className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button className="mt-3 px-4 py-2 border-2 border-gray-300 bg-white text-black  rounded-lg">
+        {/* <button className="mt-3 px-4 py-2 border-2 border-gray-300 bg-white text-black  rounded-lg">
           Add another email
-        </button>
+        </button> */}
       </div>
 
       {/* Password */}
       <div>
         <p className="font-semibold text-lg">Password</p>
-        <div className="grid grid-cols-2 gap-4 mt-2">
+        <div className="relative">
           <input
             type="password"
             placeholder="Current password"
-            className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <input
-            type="password"
-            placeholder="New password"
-            className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer">
+            <PencilLine size={20} className="text-gray-500" />
+          </div>
         </div>
       </div>
 
