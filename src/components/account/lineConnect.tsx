@@ -33,62 +33,101 @@ export default function LineConnect({
   isConnected 
 }: LineConnectProps) {
   const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const [accessToken, setAccessToken] = React.useState('');
+  const [secretToken, setSecretToken] = React.useState('');
+  const [error, setError] = React.useState('');
 
-  const handleConnect = () => {
-    // Add your Line connection logic here
-    if (onConnectionChange) {
-      onConnectionChange(true);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setAccessToken('');
+    setSecretToken('');
+    setError('');
+  };
+
+  const handleConnect = async () => {
+    if (!accessToken || !secretToken) {
+      setError("Both fields are required.");
+      return;
     }
-    handleClose();
+
+    try {
+      const response = await fetch('/api/line-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken, secretToken })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.message || 'Connection failed.');
+        return;
+      }
+
+      if (onConnectionChange) {
+        onConnectionChange(true);
+      }
+      handleClose();
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    }
   };
 
   return (
     <div>
       <button 
         onClick={handleOpen}
-        className={className || "px-4 py-2 rounded-lg border-2 border-green-500 text-green-500 bg-white"}
+        className={className || "px-4 py-2 rounded-lg border-2"}
       >
-        {children || (isConnected ? "Connected" : "Connect")}
+        {children}
       </button>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
+      <Modal open={open} onClose={handleClose}>
         <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Connect your Line Official Account
+          <Typography variant="h6" component="h2" mb={2}>
+            Connect Line Official Account
           </Typography>
-          <Box component="form" sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Your channel access token"
-              type="text"
-              variant="outlined"
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Your channel secret token"
-              type="text"
-              variant="outlined"
-              margin="normal"
-            />
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-              onClick={handleConnect}
-            >
-              Connect
-            </Button>
-          </Box>
+          <TextField
+            fullWidth
+            label="Access Token"
+            variant="outlined"
+            margin="normal"
+            value={accessToken}
+            onChange={(e) => setAccessToken(e.target.value)}
+          />
+          <TextField
+            fullWidth
+            label="Secret Token"
+            variant="outlined"
+            margin="normal"
+            value={secretToken}
+            onChange={(e) => setSecretToken(e.target.value)}
+          />
+          {error && (
+            <Typography color="error" variant="body2" mt={2}>
+              {error}
+            </Typography>
+          )}
+          <Button 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            onClick={handleConnect}
+            sx={{ mt: 2 }}
+          >
+            Connect
+          </Button>
+          <Button 
+            variant="outlined" 
+            color="secondary" 
+            fullWidth 
+            onClick={handleClose}
+            sx={{ mt: 2 }}
+          >
+            Cancel
+          </Button>
         </Box>
       </Modal>
     </div>
   );
 }
+

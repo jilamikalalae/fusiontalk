@@ -1,7 +1,7 @@
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { connectMongoDB } from "../../../../lib/mongodb";
-import User from "../../../../models/user";
+import { connectMongoDB } from "@/lib/mongodb";
+import User from "@/models/user";
 import bcrypt from "bcryptjs";
 
 
@@ -38,6 +38,20 @@ const authOptions = {
             }
         })
     ],
+    callbacks: {
+        session: async ({ session, token }) => {
+          if (session?.user) {
+            session.user.id = token.sub;
+          }
+          return session;
+        },
+        jwt: async ({ user, token }) => {
+          if (user) {
+            token.uid = user.id;
+          }
+          return token;
+        },
+    },
     session: {
         strategy: "jwt",
     },
@@ -49,4 +63,4 @@ const authOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST, authOptions };
