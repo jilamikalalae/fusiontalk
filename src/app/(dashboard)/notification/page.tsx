@@ -26,36 +26,6 @@ interface ChatMessage {
 }
 
 const inboxMessages: Message[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    preview: "Hey, how are you?",
-    time: "10:30 AM",
-    isUnread: true,
-    type: "messenger"
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    preview: "Meeting at 2 PM",
-    time: "9:45 AM",
-    type: "line"
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    preview: "Please check the docs",
-    time: "Yesterday",
-    type: "messenger"
-  },
-  {
-    id: 4,
-    name: "Sarah Wilson",
-    preview: "Thanks for your help!",
-    time: "Yesterday",
-    isUnread: true,
-    type: "line"
-  },
 ];
 
 // Add sample chat messages

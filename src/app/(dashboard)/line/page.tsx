@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -7,17 +7,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { inboxMessages, chatMessagesData, type Message, type ChatMessage } from "@/lib/store/messages";
+import { Message } from "@/lib/types";
 
 const LinePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState<Message | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredMessages = inboxMessages
-    .filter((message) => message.type === "line")
-    .filter((message) => 
-      message.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const response = await fetch('/api/messages/line');
+      const data = await response.json();
+      setMessages(data);
+      setLoading(false);
+    };
+
+    fetchMessages();
+  }, []);
+
+  const filteredMessages = messages
+    .filter((message) => message.userName.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -50,11 +61,13 @@ const LinePage: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gray-300 rounded-full" />
                     <div>
-                      <p className="font-medium">{message.name}</p>
-                      <p className="text-sm text-gray-500">{message.preview}</p>
+                      <p className="font-medium">{message.userName}</p>
+                      <p className="text-sm text-gray-500">{message.content}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400">{message.time}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(message.createdAt).toLocaleString()}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -68,22 +81,20 @@ const LinePage: React.FC = () => {
           <CardContent className="flex flex-col h-full justify-between">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4">
-              {selectedContact && chatMessagesData[selectedContact.id] ? (
-                chatMessagesData[selectedContact.id].map((msg) => (
+              {selectedContact && messages.length > 0 ? (
+                messages.map((msg) => (
                   <div
                     key={msg.id}
                     className={`flex ${
-                      msg.sender === "user" ? "justify-end" : "justify-start"
+                      msg.userId === "current_user_id" ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
                       className={`max-w-sm p-3 rounded-lg ${
-                        msg.sender === "user"
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-200"
+                        msg.userId === "current_user_id" ? "bg-blue-500 text-white" : "bg-gray-200"
                       }`}
                     >
-                      {msg.text}
+                      {msg.content}
                     </div>
                   </div>
                 ))

@@ -1,72 +1,76 @@
-import 'server-only';
+import { MongoClient } from 'mongodb';
 
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-import {
-  pgTable,
-  text,
-  numeric,
-  integer,
-  timestamp,
-  pgEnum,
-  serial
-} from 'drizzle-orm/pg-core';
-import { count, eq, ilike } from 'drizzle-orm';
-import { createInsertSchema } from 'drizzle-zod';
 
-export const db = drizzle(neon(process.env.POSTGRES_URL!));
 
-export const statusEnum = pgEnum('status', ['active', 'inactive', 'archived']);
-
-export const products = pgTable('products', {
-  id: serial('id').primaryKey(),
-  imageUrl: text('image_url').notNull(),
-  name: text('name').notNull(),
-  status: statusEnum('status').notNull(),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  stock: integer('stock').notNull(),
-  availableAt: timestamp('available_at').notNull()
-});
-
-export type SelectProduct = typeof products.$inferSelect;
-export const insertProductSchema = createInsertSchema(products);
-
-export async function getProducts(
-  search: string,
-  offset: number
-): Promise<{
-  products: SelectProduct[];
-  newOffset: number | null;
-  totalProducts: number;
-}> {
-  // Always search the full table, not per page
-  if (search) {
-    return {
-      products: await db
-        .select()
-        .from(products)
-        .where(ilike(products.name, `%${search}%`))
-        .limit(1000),
-      newOffset: null,
-      totalProducts: 0
-    };
-  }
-
-  if (offset === null) {
-    return { products: [], newOffset: null, totalProducts: 0 };
-  }
-
-  let totalProducts = await db.select({ count: count() }).from(products);
-  let moreProducts = await db.select().from(products).limit(5).offset(offset);
-  let newOffset = moreProducts.length >= 5 ? offset + 5 : null;
-
-  return {
-    products: moreProducts,
-    newOffset,
-    totalProducts: totalProducts[0].count
-  };
+if (!process.env.MONGODB_URI) {
+  throw new Error('Please add your Mongo URI to .env.local');
 }
 
-export async function deleteProductById(id: number) {
-  await db.delete(products).where(eq(products.id, id));
+const uri = process.env.MONGODB_URI;
+const client = new MongoClient(uri);
+
+export async function connectToDatabase() {
+  try {
+    await client.connect();
+    return client.db(process.env.MONGODB_DB || 'fusiontalk');
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    throw error;
+  }
+}
+
+export async function upsertLineContact(contact: {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+}) {
+  const db = await connectToDatabase();
+  const collection = db.collection('contacts');
+  
+  return await collection.updateOne(
+    { userId: contact.userId },
+    { 
+      $set: {
+        ...contact,
+        messageType: 'line',
+        updatedAt: new Date()
+      }
+    },
+    { upsert: true }
+  );
+}
+
+export async function storeLineMessage(userId: string, userName: string, content: string, sender: 'user' | 'bot' = 'user') {
+  const db = await connectToDatabase();
+  const collection = db.collection('messages');
+  
+  return await collection.insertOne({
+    userId,
+    userName,
+    messageType: 'line',
+    content,
+    sender,
+    createdAt: new Date()
+  });
+}
+
+export async function getLineMessages() {
+  const db = await connectToDatabase();
+  const collection = db.collection('messages');
+  
+  return await collection
+    .find({ messageType: 'line' })
+    .sort({ createdAt: -1 })
+    .toArray();
+}
+
+export async function getLineContacts() {
+  const db = await connectToDatabase();
+  const collection = db.collection('contacts');
+  
+  return await collection
+    .find({ messageType: 'line' })
+    .sort({ updatedAt: -1 })
+    .toArray();
 }
