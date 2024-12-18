@@ -4,12 +4,7 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  SxProps,
-  Theme
+  Button
 } from '@mui/material';
 
 const style = {
@@ -19,74 +14,120 @@ const style = {
   transform: 'translate(-50%, -50%)',
   width: 400,
   bgcolor: 'background.paper',
-  border: '2px solid #000',
   boxShadow: 24,
-  p: 4
+  p: 4, 
+  borderRadius: 4
 };
 
-interface Request {
-    requestOpen: boolean;
-    onClose: () => void;  
+interface LineConnectProps {
+  className?: string;
+  children?: React.ReactNode;
+  onConnectionChange?: (connected: boolean) => void;
+  isConnected?: boolean;
 }
 
-export default function LineConnect({requestOpen,onClose}: Request) {
+export default function LineConnect({ 
+  className, 
+  children, 
+  onConnectionChange,
+  isConnected 
+}: LineConnectProps) {
+  const [open, setOpen] = React.useState(false);
+  const [accessToken, setAccessToken] = React.useState('');
+  const [secretToken, setSecretToken] = React.useState('');
+  const [error, setError] = React.useState('');
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setAccessToken('');
+    setSecretToken('');
+    setError('');
+  };
+
+  const handleConnect = async () => {
+    if (!accessToken || !secretToken) {
+      setError("Both fields are required.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/line-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken, secretToken })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.message || 'Connection failed.');
+        return;
+      }
+
+      if (onConnectionChange) {
+        onConnectionChange(true);
+      }
+      handleClose();
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    }
+  };
+
   return (
     <div>
-      <Modal
-        open={requestOpen}
-        onClose={onClose}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
+      <button 
+        onClick={handleOpen}
+        className={className || "px-4 py-2 rounded-lg border-2"}
       >
+        {children}
+      </button>
+      <Modal open={open} onClose={handleClose}>
         <Box sx={style}>
-          <Typography id="modal-title" variant="h6" component="h2">
-            Sign in to our platform
+          <Typography variant="h6" component="h2" mb={2}>
+            Connect Line Official Account
           </Typography>
-          <Box component="form" sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Your email"
-              type="email"
-              variant="outlined"
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Your password"
-              type="password"
-              variant="outlined"
-              margin="normal"
-            />
-            <FormControlLabel control={<Checkbox />} label="Remember me" />
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mt: 1
-              }}
-            >
-              <Link href="#" underline="hover">
-                Lost Password?
-              </Link>
-            </Box>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-            >
-              Login to your account
-            </Button>
-            <Typography variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
-              Not registered?{' '}
-              <Link href="#" underline="hover">
-                Create account
-              </Link>
+          <TextField
+            fullWidth
+            label="Access Token"
+            variant="outlined"
+            margin="normal"
+            value={accessToken}
+            onChange={(e) => setAccessToken(e.target.value)}
+          />
+          <TextField
+            fullWidth
+            label="Secret Token"
+            variant="outlined"
+            margin="normal"
+            value={secretToken}
+            onChange={(e) => setSecretToken(e.target.value)}
+          />
+          {error && (
+            <Typography color="error" variant="body2" mt={2}>
+              {error}
             </Typography>
-          </Box>
+          )}
+          <Button 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            onClick={handleConnect}
+            sx={{ mt: 2 }}
+          >
+            Connect
+          </Button>
+          <Button 
+            variant="outlined" 
+            color="secondary" 
+            fullWidth 
+            onClick={handleClose}
+            sx={{ mt: 2 }}
+          >
+            Cancel
+          </Button>
         </Box>
       </Modal>
     </div>
   );
 }
+
