@@ -4,59 +4,69 @@ import User from "@/models/user";
 import bcrypt from "bcryptjs";
 
 const authOptions = {
-    providers: [
-        CredentialsProvider({
-          name: "credentials",
-          credentials: {},
-          async authorize(credentials, req) {
-
-            const { email, password } = credentials;
-
-            try {
-
-                await connectMongoDB();
-                const user = await User.findOne({ email });
-
-                if (!user) {
-                    return null;
-                }
-
-                const passwordMatch = await bcrypt.compare(password, user.password);
-
-                if (!password){
-                    return null;
-                }
-
-                return user;
-
-            } catch(error) {
-                console.log("Error: ", error)
-            }
+  providers: [
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "text", placeholder: "user@example.com" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials, req) {
+        const { email, password } = credentials;
       
-            }
-        })
-    ],
-    callbacks: {
-        session: async ({ session, token }) => {
-          if (session?.user) {
-            session.user.id = token.sub;
+        if (!email || !password) {
+          console.error("Missing email or password");
+          return null; // Return null instead of throwing an error
+        }
+      
+        try {
+          await connectMongoDB();
+      
+          const user = await User.findOne({ email });
+      
+          if (!user) {
+            console.error("Invalid email or password");
+            return null; // Invalid user
           }
-          return session;
-        },
-        jwt: async ({ user, token }) => {
-          if (user) {
-            token.uid = user.id;
+      
+          const passwordMatch = await bcrypt.compare(password, user.password);
+      
+          if (!passwordMatch) {
+            console.error("Invalid email or password");
+            return null; // Password mismatch
           }
-          return token;
-        },
+      
+          return { id: user._id, email: user.email, name: user.name };
+        } catch (error) {
+          console.error("Error in authorize function:", error);
+          return null; // Handle errors gracefully
+        }
+      }
+    }),
+  ],
+  callbacks: {
+    // Customize the session object
+    session: async ({ session, token }) => {
+      if (session?.user) {
+        session.user.id = token.sub; // Attach user ID to the session
+      }
+      return session;
     },
-    session: {
-        strategy: "jwt",
+    // Customize the JWT object
+    jwt: async ({ user, token }) => {
+      if (user) {
+        token.uid = user.id; // Attach user ID to the JWT token
+      }
+      return token;
     },
-    secret: process.env.NEXTAUTH_SECRET,
-    pages: {
-        signIn: "/login",
-    }
+  },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/login", 
+  },
 };
 
-export default authOptions
+export default authOptions;
