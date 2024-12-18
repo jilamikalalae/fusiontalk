@@ -3,7 +3,7 @@ import { connectMongoDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import bcrypt from "bcryptjs";
 
-export const authOptions = {
+const authOptions = {
     providers: [
         CredentialsProvider({
           name: "credentials",
@@ -58,3 +58,5 @@ export const authOptions = {
         signIn: "/login",
     }
 };
+
+export default authOptions

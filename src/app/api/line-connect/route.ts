@@ -3,7 +3,7 @@ import { connectMongoDB } from '../../../lib/mongodb';
 import User from '../../../models/user';
 import bcrypt from 'bcryptjs';
 import { AuthOptions, getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import authOptions from '@/lib/authOptions';
 
 export async function POST(req: NextRequest) {
   try {
