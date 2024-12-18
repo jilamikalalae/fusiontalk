@@ -2,15 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectMongoDB } from '../../../lib/mongodb';
 import User from '../../../models/user';
 import bcrypt from 'bcryptjs';
-import { AuthOptions, getServerSession } from "next-auth"
+import { AuthOptions, getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
 
-
-export async function POST(req: NextRequest, res: NextApiResponse) {
+export async function POST(req: NextRequest) {
   try {
-    const { accessToken, secretToken } = await req.json()
+    const { accessToken, secretToken } = await req.json();
 
     if (!accessToken || !secretToken) {
       return NextResponse.json(
@@ -37,8 +34,10 @@ export async function POST(req: NextRequest, res: NextApiResponse) {
     const hashedSecretToken = await bcrypt.hash(secretToken, 10);
 
     // Update user tokens
-    existingUser.accessToken = hashedAccessToken;
-    existingUser.secretToken = hashedSecretToken;
+    let lineToken = {} as any;
+    lineToken.accessToken = hashedAccessToken;
+    lineToken.secretToken = hashedSecretToken;
+    existingUser.lineToken = lineToken;
     await existingUser.save();
 
     return NextResponse.json(
