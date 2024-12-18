@@ -45,6 +45,7 @@ const LinePage: React.FC = () => {
                   className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
                     message.isUnread ? "font-bold" : ""
                   }`}
+                  onClick={() => setSelectedContact(message)}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gray-300 rounded-full" />
