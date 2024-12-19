@@ -63,7 +63,7 @@ export default function ChangePasswordDialog() {
             label="Current password"
             type="password"
             variant="outlined"
-            helperText="Updated 04/20/2024"
+            // helperText="Updated 04/20/2024"
           />
           <TextField
             required

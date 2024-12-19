@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { PencilLine } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import NewPassword from '@/components/account/newPassword'
 
 import LineConnect from '@/components/account/lineConnect';
 
@@ -60,7 +61,8 @@ const AccountManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
+    <div >
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
       {/* Profile Picture */}
       <div className="flex items-center space-x-6 mb-6">
         <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden">
@@ -70,7 +72,7 @@ const AccountManagementPage: React.FC = () => {
             className="w-full h-full object-cover"
           />
         </div>
-        <div>
+        {/* <div>
           <p className="font-semibold text-lg">Profile picture</p>
           <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
           <div className="mt-2 flex space-x-2">
@@ -81,7 +83,7 @@ const AccountManagementPage: React.FC = () => {
               Delete
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Full Name */}
@@ -108,23 +110,25 @@ const AccountManagementPage: React.FC = () => {
         />
       </div>
 
-      {/* Password */}
-      <div>
+      </div>
+       {/* Password */}
+       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Password</p>
         <div className="relative">
-          <input
-            type="password"
-            placeholder="Current password"
+          <button
             className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          >
+          <p className='text-left'>Change password</p>
+          </button>
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer">
-            <PencilLine size={20} className="text-gray-500" />
+            <ChevronRight size={20} className="text-gray-500" />
           </div>
+          <NewPassword/>
         </div>
       </div>
       
       {/* Integrated Accounts */}
-      <div>
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Integrated accounts</p>
         <ul className="mt-4 space-y-4">
           <li className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow">
@@ -171,7 +175,7 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Account Security */}
-      <div>
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Account Security</p>
         <div className="mt-4 flex space-x-4">
           <button
