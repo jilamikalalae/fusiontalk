@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     lineToken.accessToken = hashedAccessToken;
     lineToken.secretToken = hashedSecretToken;
     existingUser.lineToken = lineToken;
+    console.log(existingUser)
     await existingUser.save();
 
     return NextResponse.json(

@@ -1,92 +1,68 @@
-"use client";
+'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
-import { useSession } from "next-auth/react";
+import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { PencilLine } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import NewPassword from '@/components/account/newPassword'
 
 import LineConnect from '@/components/account/lineConnect';
-import {
-  Modal,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  SxProps,
-  Theme
-} from '@mui/material';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  borderRadius: '8px',
-  boxShadow: 24,
-  p: 4
-} as SxProps<Theme>;
-
-interface IntegratedAccount {
-  id: number;
-  name: string;
-  description: string;
-  isConnected: boolean;
-}
 
 const AccountManagementPage: React.FC = () => {
-  const [notifications, setNotifications] = useState({
-    email: true,
-    sms: false,
-    app: true
-  });
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const { data: session } = useSession();
 
-  const toggleNotification = (type: 'email' | 'sms' | 'app') => {
-    setNotifications((prev) => ({ ...prev, [type]: !prev[type] }));
+  // Redirect to login if not authenticated
+  if (!session) redirect('/login');
+
+  const [userProfile, setUserProfile] = useState({
+    name: '',
+    email: '',
+    isLineConnected: false,
+    isMessengerConnected: false
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch('/api/users', { method: 'GET' });
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        const data = await response.json();
+        setUserProfile({
+          name: data.name || '',
+          email: data.email || '',
+          isLineConnected: data.isLineConnected || false,
+          isMessengerConnected: data.isMessengerConnect || false
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  const handleConnectionLine = (connected: boolean) => {
+    setUserProfile((prev) => ({ ...prev, isLineConnected: connected }));
   };
 
-  const { data: session } = useSession();
-  
-  if (!session) redirect("/login");
-
-
-  const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
-  const [integratedAccounts, setIntegratedAccounts] = useState<IntegratedAccount[]>([
-    {
-      id: 1,
-      name: 'Line',
-      description: 'Connect your line account.',
-      isConnected: false
-    },
-    {
-      id: 2,
-      name: 'Messenger',
-      description: 'Connect your messenger account.',
-      isConnected: true
-    }
-  ]);
-
-  const handleConnectionChange = (accountId: number, connected: boolean) => {
-    setIntegratedAccounts(accounts => 
-      accounts.map(account => 
-        account.id === accountId 
-          ? { ...account, isConnected: connected }
-          : account
-      )
-    );
+  const handleConnectionMessenger = (connected: boolean) => {
+    setUserProfile((prev) => ({ ...prev, isMessengerConnected: connected }));
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
+    <div >
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
       {/* Profile Picture */}
       <div className="flex items-center space-x-6 mb-6">
         <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden">
@@ -96,7 +72,7 @@ const AccountManagementPage: React.FC = () => {
             className="w-full h-full object-cover"
           />
         </div>
-        <div>
+        {/* <div>
           <p className="font-semibold text-lg">Profile picture</p>
           <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
           <div className="mt-2 flex space-x-2">
@@ -107,24 +83,19 @@ const AccountManagementPage: React.FC = () => {
               Delete
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Full Name */}
       <div>
-        <p className="font-semibold text-lg">Full name</p>
-        <div className="grid grid-cols-2 gap-4 mt-2">
-          <input
-            type="text"
-            placeholder="First name"
-            className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="text"
-            placeholder="Last name"
-            className="p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <p className="font-semibold text-lg">Name</p>
+        <input
+          type="text"
+          value={userProfile.name}
+          readOnly
+          placeholder="Name"
+          className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
 
       {/* Contact Email */}
@@ -132,75 +103,85 @@ const AccountManagementPage: React.FC = () => {
         <p className="font-semibold text-lg">Contact email</p>
         <input
           type="email"
+          value={userProfile.email}
+          readOnly
           placeholder="Email address"
           className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
         />
-        {/* <button className="mt-3 px-4 py-2 border-2 border-gray-300 bg-white text-black  rounded-lg">
-          Add another email
-        </button> */}
       </div>
 
-      {/* Password */}
-      <div>
+      </div>
+       {/* Password */}
+       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Password</p>
         <div className="relative">
-          <input
-            type="password"
-            placeholder="Current password"
+          <button
             className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          >
+          <p className='text-left'>Change password</p>
+          </button>
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer">
-            <PencilLine size={20} className="text-gray-500" />
+            <ChevronRight size={20} className="text-gray-500" />
           </div>
+          <NewPassword/>
         </div>
       </div>
-
+      
       {/* Integrated Accounts */}
-      <div>
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Integrated accounts</p>
         <ul className="mt-4 space-y-4">
-          {integratedAccounts.map((account) => (
-            <li
-              key={account.id}
-              className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow"
+          <li className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow">
+            <div>
+              <p className="font-medium">Line</p>
+              <p className="text-sm text-gray-500">
+                Connect your Line account.
+              </p>
+            </div>
+            <LineConnect
+              className={`px-4 py-2 rounded-lg border-2 ${
+                userProfile.isLineConnected
+                  ? 'border-red-500 text-red-500 bg-white'
+                  : 'border-gray-300 text-gray-700 bg-white'
+              }`}
+              onConnectionChange={handleConnectionLine}
+              isConnected={userProfile.isLineConnected}
             >
-              <div>
-                <p className="font-medium">{account.name}</p>
-                <p className="text-sm text-gray-500">{account.description}</p>
-              </div>
-              {account.name === 'Line' ? (
-                <LineConnect 
-                  className={`px-4 py-2 rounded-lg border-2 ${
-                    account.isConnected
-                      ? 'border-green-500 text-green-500 bg-white'
-                      : 'border-gray-300 text-gray-700 bg-white'
-                  }`}
-                  onConnectionChange={(connected) => handleConnectionChange(account.id, connected)}
-                  isConnected={account.isConnected}
-                >
-                  {account.isConnected ? 'Connected' : 'Connect'}
-                </LineConnect>
-              ) : (
-                <button
-                  className={`px-4 py-2 rounded-lg border-2 ${
-                    account.isConnected
-                      ? 'border-green-500 text-green-500 bg-white'
-                      : 'border-gray-300 text-gray-700 bg-white'
-                  }`}
-                >
-                  {account.isConnected ? 'Connected' : 'Connect'}
-                </button>
-              )}
-            </li>
-          ))}
+              {userProfile.isLineConnected ? 'Unlink' : 'Link'}
+            </LineConnect>
+          </li>
+        </ul>
+        <ul className="mt-4 space-y-4">
+          <li className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow">
+            <div>
+              <p className="font-medium">Messenger</p>
+              <p className="text-sm text-gray-500">
+                Connect your Messenger account.
+              </p>
+            </div>
+            <LineConnect
+              className={`px-4 py-2 rounded-lg border-2 ${
+                userProfile.isMessengerConnected
+                  ? 'border-green-500 text-green-500 bg-white'
+                  : 'border-gray-300 text-gray-700 bg-white'
+              }`}
+              onConnectionChange={handleConnectionMessenger}
+              isConnected={userProfile.isLineConnected}
+            >
+              {userProfile.isMessengerConnected ? 'Unlink' : 'Link'}
+            </LineConnect>
+          </li>
         </ul>
       </div>
 
       {/* Account Security */}
-      <div>
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Account Security</p>
         <div className="mt-4 flex space-x-4">
-          <button onClick={() => signOut()} className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg">
+          <button
+            onClick={() => signOut()}
+            className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg"
+          >
             Log out
           </button>
           <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg">
