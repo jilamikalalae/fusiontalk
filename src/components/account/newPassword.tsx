@@ -1,14 +1,16 @@
-import * as React from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Checkbox from "@mui/material/Checkbox";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Typography from "@mui/material/Typography";
-import Link from "@mui/material/Link";
+import * as React from 'react';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Typography from '@mui/material/Typography';
+import Link from '@mui/material/Link';
+
+import { ChevronRight } from 'lucide-react';
 
 export default function ChangePasswordDialog() {
   const [open, setOpen] = React.useState(false);
@@ -26,10 +28,10 @@ export default function ChangePasswordDialog() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const data = {
-      currentPassword: formData.get("currentPassword"),
-      newPassword: formData.get("newPassword"),
-      retypeNewPassword: formData.get("retypeNewPassword"),
-      logoutOtherDevices,
+      currentPassword: formData.get('currentPassword'),
+      newPassword: formData.get('newPassword'),
+      retypeNewPassword: formData.get('retypeNewPassword'),
+      logoutOtherDevices
     };
     console.log(data);
     handleClose();
@@ -37,15 +39,26 @@ export default function ChangePasswordDialog() {
 
   return (
     <React.Fragment>
-      <Button variant="outlined" onClick={handleClickOpen}>
+      {/* <Button variant="outlined" onClick={handleClickOpen} >
         Change Password
-      </Button>
+      </Button> */}
+      <div>
+        <button
+          className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+          onClick={handleClickOpen}
+        >
+          <p className="text-left">Change password</p>
+        </button>
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer">
+          <ChevronRight size={20} className="text-gray-500" />
+        </div>
+      </div>
       <Dialog
         open={open}
         onClose={handleClose}
         PaperProps={{
-          component: "form",
-          onSubmit: handleSubmit,
+          component: 'form',
+          onSubmit: handleSubmit
         }}
       >
         <DialogTitle>Change Password</DialogTitle>
@@ -85,7 +98,11 @@ export default function ChangePasswordDialog() {
             type="password"
             variant="outlined"
           />
-          <Link href="#" variant="body2" sx={{ display: "block", mt: 1, mb: 2 }}>
+          <Link
+            href="#"
+            variant="body2"
+            sx={{ display: 'block', mt: 1, mb: 2 }}
+          >
             Forgot your password?
           </Link>
           <FormControlLabel

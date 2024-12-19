@@ -77,7 +77,7 @@ export default function LineConnect({
     <div>
       <button 
         onClick={handleOpen}
-        className={className || "px-4 py-2 rounded-lg border-2"}
+        className={className || "px-4 py-2 rounded-lg border-1"}
       >
         {children}
       </button>

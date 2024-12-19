@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
-import NewPassword from '@/components/account/newPassword'
+import NewPassword from '@/components/account/newPassword';
+import LinearProgress from '@mui/material/LinearProgress';
 
 import LineConnect from '@/components/account/lineConnect';
 
@@ -23,6 +23,8 @@ const AccountManagementPage: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({ name: '', email: '' });
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -48,8 +50,47 @@ const AccountManagementPage: React.FC = () => {
     fetchUserProfile();
   }, []);
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditedProfile({ name: userProfile.name, email: userProfile.email });
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedProfile({ name: '', email: '' });
+  };
+
+  const handleSave = async () => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editedProfile),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user data');
+      }
+
+      const data = await response.json();
+      console.log(data.message);
+
+      setUserProfile((prev) => ({
+        ...prev,
+        name: editedProfile.name,
+        email: editedProfile.email,
+      }));
+      setIsEditing(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <LinearProgress />;
   }
 
   const handleConnectionLine = (connected: boolean) => {
@@ -61,72 +102,93 @@ const AccountManagementPage: React.FC = () => {
   };
 
   return (
-    <div >
+    <div>
       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
-      {/* Profile Picture */}
-      <div className="flex items-center space-x-6 mb-6">
-        <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden">
-          <img
-            src="https://via.placeholder.com/150"
-            alt="Profile"
-            className="w-full h-full object-cover"
+        {/* Profile Picture */}
+        <div className="flex items-center space-x-6 mb-6">
+          <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
+            <img
+              src="https://via.placeholder.com/150"
+              alt="Profile"
+              className="object-contain"
+            />
+          </div>
+
+          <div className="flex-1 flex justify-end">
+            {!isEditing && (
+              <button
+                onClick={handleEdit}
+                className="px-4 py-2 border-2 border-red-500 text-red-500 bg-white rounded-lg"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Full Name */}
+        <div>
+          <p className="font-semibold text-lg">Name</p>
+          <input
+            type="text"
+            value={isEditing ? editedProfile.name : userProfile.name}
+            onChange={(e) =>
+              setEditedProfile((prev) => ({ ...prev, name: e.target.value }))
+            }
+            readOnly={!isEditing}
+            placeholder="Name"
+            className={`mt-2 w-full p-3 border rounded-lg outline-none ${
+              isEditing ? 'focus:ring-2 focus:ring-blue-500' : ''
+            }`}
           />
         </div>
-        {/* <div>
-          <p className="font-semibold text-lg">Profile picture</p>
-          <p className="text-sm text-gray-500">PNG, JPEG under 15MB</p>
-          <div className="mt-2 flex space-x-2">
-            <button className="px-4 py-2  bg-gray-300 text-blue-500 rounded-lg">
-              Upload
+
+        {/* Contact Email */}
+        <div>
+          <p className="font-semibold text-lg">Contact email</p>
+          <input
+            type="email"
+            value={isEditing ? editedProfile.email : userProfile.email}
+            onChange={(e) =>
+              setEditedProfile((prev) => ({ ...prev, email: e.target.value }))
+            }
+            readOnly={!isEditing}
+            placeholder="Email address"
+            className={`mt-2 w-full p-3 border rounded-lg outline-none ${
+              isEditing ? 'focus:ring-2 focus:ring-blue-500' : ''
+            }`}
+          />
+        </div>
+
+        {/* Save and Cancel Buttons */}
+        {isEditing && (
+          <div className="mt-4 flex space-x-4">
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+            >
+              Save
             </button>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg">
-              Delete
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 bg-gray-200 text-black rounded-lg"
+            >
+              Cancel
             </button>
           </div>
-        </div> */}
+        )}
       </div>
 
-      {/* Full Name */}
-      <div>
-        <p className="font-semibold text-lg">Name</p>
-        <input
-          type="text"
-          value={userProfile.name}
-          readOnly
-          placeholder="Name"
-          className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
 
-      {/* Contact Email */}
-      <div>
-        <p className="font-semibold text-lg">Contact email</p>
-        <input
-          type="email"
-          value={userProfile.email}
-          readOnly
-          placeholder="Email address"
-          className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
 
-      </div>
-       {/* Password */}
-       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
+      {/* Password */}
+      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Password</p>
         <div className="relative">
-          <button
-            className="mt-2 w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-          >
-          <p className='text-left'>Change password</p>
-          </button>
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer">
-            <ChevronRight size={20} className="text-gray-500" />
-          </div>
-          <NewPassword/>
+          <NewPassword />
         </div>
       </div>
-      
+
       {/* Integrated Accounts */}
       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
         <p className="font-semibold text-lg">Integrated accounts</p>
