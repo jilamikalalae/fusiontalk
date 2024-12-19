@@ -1,10 +1,10 @@
 import LineContact from '@/models/lineContact';
 import LineMessage from '@/models/lineMessage';
-import { connectDB } from '@/lib/mongodb';
+import { connectMongoDB } from '@/lib/mongodb';
 
 // LINE Contacts
 export async function upsertLineContact({ userId, displayName, pictureUrl, statusMessage }) {
-  await connectDB();
+  await connectMongoDB();
   return await LineContact.findOneAndUpdate(
     { userId },
     {
@@ -18,7 +18,7 @@ export async function upsertLineContact({ userId, displayName, pictureUrl, statu
 }
 
 export async function getLineContacts() {
-  await connectDB();
+  await connectMongoDB();
   return await LineContact.find({})
     .sort({ lastMessageAt: -1 })
     .lean();
@@ -26,7 +26,7 @@ export async function getLineContacts() {
 
 // LINE Messages
 export async function storeLineMessage(userId, userName, content, messageType) {
-  await connectDB();
+  await connectMongoDB();
   
   // Create the message
   const message = await LineMessage.create({
@@ -52,7 +52,7 @@ export async function storeLineMessage(userId, userName, content, messageType) {
 }
 
 export async function getLineMessages(userId = null) {
-  await connectDB();
+  await connectMongoDB();
   const query = userId ? { userId } : {};
   return await LineMessage.find(query)
     .sort({ createdAt: -1 })
@@ -60,7 +60,7 @@ export async function getLineMessages(userId = null) {
 }
 
 export async function markMessagesAsRead(userId) {
-  await connectDB();
+  await connectMongoDB();
   return await LineMessage.updateMany(
     { userId, isRead: false },
     { isRead: true }

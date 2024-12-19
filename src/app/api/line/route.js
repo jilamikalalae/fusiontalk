@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { storeLineMessage, upsertLineContact } from '@/lib/db';
+import { connectMongoDB } from '@/lib/mongodb';
 
 async function getLineUserProfile(userId) {
+  await connectMongoDB();
+
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
     throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
   }

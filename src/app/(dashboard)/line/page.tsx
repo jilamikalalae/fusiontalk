@@ -17,18 +17,26 @@ const LinePage: React.FC = () => {
 
   useEffect(() => {
     const fetchMessages = async () => {
-      const response = await fetch('/api/messages/line');
-      const data = await response.json();
-      setMessages(data);
-      setLoading(false);
+      try {
+        const response = await fetch('/api/messages/line');
+        const data = await response.json();
+        setMessages(Array.isArray(data) ? data : []);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        setMessages([]);
+        setLoading(false);
+      }
     };
 
     fetchMessages();
   }, []);
 
-  const filteredMessages = messages
-    .filter((message) => message.userName.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const filteredMessages = Array.isArray(messages) 
+    ? messages
+        .filter((message) => message.userName.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    : [];
 
   return (
     <div className="flex h-screen bg-gray-100">
