@@ -54,32 +54,36 @@ export async function POST(req) {
         if (event.type === 'message' && event.message.type === 'text') {
           const userMessage = event.message.text;
           const userId = event.source.userId;
-          
+
           // Fetch and store user profile
           try {
             const userProfile = await getLineUserProfile(userId);
+            console.log(userProfile)
             await upsertLineContact({
               userId,
               displayName: userProfile.displayName,
               pictureUrl: userProfile.pictureUrl,
               statusMessage: userProfile.statusMessage
             });
+
+
+            // Store the user message
+            await storeLineMessage(
+              userId,
+              userProfile.displayName,
+              userMessage,
+              'user'
+            );
+
+
           } catch (profileError) {
             console.error('Error fetching user profile:', profileError);
           }
-          
-          // Store the user message
-          await storeLineMessage(
-            userId,
-            'LINE User',
-            userMessage,
-            'user'
-          );
-          
+
           // Generate bot reply
           const lowerCaseMessage = userMessage.toLowerCase().trim();
           let botReply;
-          
+
           if (lowerCaseMessage === 'hello' || lowerCaseMessage === 'hi') {
             botReply = "Hello! How can I assist you today?";
           } else {
@@ -127,6 +131,40 @@ async function sendLineMessage(replyToken, message) {
   };
   const body = JSON.stringify({
     replyToken,
+    messages: [{ type: 'text', text: message }]
+  });
+
+  const response = await fetch(LINE_API_URL, {
+    method: 'POST',
+    headers,
+    body
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(`LINE API error: ${response.status} ${errorData}`);
+  }
+
+  return response;
+}
+
+async function sendMessageToUser(userId, message) {
+  // Fetch user profile to get replyToken or use a predefined replyToken
+  const userProfile = await getLineUserProfile(userId);
+  const replyToken = userProfile.replyToken; // Assuming you have a way to get replyToken
+
+  // Send message to user
+  await sendLineMessage(replyToken, message);
+}
+
+async function pushMessageToUser(userId, message) {
+  const LINE_API_URL = 'https://api.line.me/v2/bot/message/push';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+  };
+  const body = JSON.stringify({
+    to: userId,
     messages: [{ type: 'text', text: message }]
   });
 
