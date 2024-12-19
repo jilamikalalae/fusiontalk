@@ -20,13 +20,30 @@ async function getLineUserProfile(userId) {
 }
 
 export async function POST(req) {
+  // Add CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
+  // Handle OPTIONS request (preflight)
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 200, headers });
+  }
+
   try {
+    if (!req.body) {
+      console.error('No request body');
+      return NextResponse.json({ error: 'No request body' }, { status: 400, headers });
+    }
+
     const body = await req.json();
-    console.log('Received webhook:', body);
+    console.log('Received webhook body:', JSON.stringify(body, null, 2));
 
     if (!body.events || !Array.isArray(body.events)) {
       console.error('Invalid webhook format:', body);
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400, headers });
     }
 
     for (const event of body.events) {
@@ -89,12 +106,12 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({ status: 'ok' });
+    return NextResponse.json({ status: 'ok' }, { headers });
   } catch (error) {
     console.error('Webhook error:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
 }
@@ -122,4 +139,16 @@ async function sendLineMessage(replyToken, message) {
   }
 
   return response;
+}
+
+// Make sure OPTIONS method is handled
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
