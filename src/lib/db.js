@@ -1,10 +1,10 @@
 import LineContact from '@/models/lineContact';
 import LineMessage from '@/models/lineMessage';
-import { connectDB } from '@/lib/mongodb';
+import { connectMongoDB } from '@/lib/mongodb';
 
 // LINE Contacts
 export async function upsertLineContact({ userId, displayName, pictureUrl, statusMessage }) {
-  await connectDB();
+  await connectMongoDB();
   return await LineContact.findOneAndUpdate(
     { userId },
     {
@@ -18,41 +18,37 @@ export async function upsertLineContact({ userId, displayName, pictureUrl, statu
 }
 
 export async function getLineContacts() {
-  await connectDB();
+  await connectMongoDB();
   return await LineContact.find({})
     .sort({ lastMessageAt: -1 })
     .lean();
 }
 
 // LINE Messages
-export async function storeLineMessage(userId, userName, content, messageType) {
-  await connectDB();
-  
-  // Create the message
-  const message = await LineMessage.create({
-    userId,
-    userName,
-    content,
-    messageType,
-    isRead: false,
-  });
+export async function storeLineMessage(messageData) {
+  try {
+    await connectMongoDB();
+    
+    const newMessage = new LineMessage({
+      userId: messageData.userId,
+      userName: messageData.userName,
+      content: messageData.content,
+      messageType: messageData.messageType,
+      createdAt: messageData.createdAt,
+      replyTo: messageData.replyTo,
+      isRead: false,
+    });
 
-  // Update the contact's last message
-  if (userId !== 'BOT') {
-    await LineContact.findOneAndUpdate(
-      { userId },
-      {
-        lastMessage: content,
-        lastMessageAt: new Date(),
-      }
-    );
+    const savedMessage = await newMessage.save();
+    return savedMessage;
+  } catch (error) {
+    console.error('Error storing LINE message:', error);
+    throw error;
   }
-
-  return message;
 }
 
 export async function getLineMessages(userId = null) {
-  await connectDB();
+  await connectMongoDB();
   const query = userId ? { userId } : {};
   return await LineMessage.find(query)
     .sort({ createdAt: -1 })
@@ -60,7 +56,7 @@ export async function getLineMessages(userId = null) {
 }
 
 export async function markMessagesAsRead(userId) {
-  await connectDB();
+  await connectMongoDB();
   return await LineMessage.updateMany(
     { userId, isRead: false },
     { isRead: true }
