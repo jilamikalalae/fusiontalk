@@ -1,10 +1,10 @@
 export interface Message {
-  id: number;
+  id: string;
   userId: string;
   userName: string;
-  messageType: "line" | "messenger";
   content: string;
-  createdAt: Date;
-  sender: "user" | "recipient";
+  createdAt: string;
   isUnread?: boolean;
+  pictureUrl?: string;
+  displayName?: string;
 } 

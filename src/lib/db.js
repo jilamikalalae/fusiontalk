@@ -25,30 +25,26 @@ export async function getLineContacts() {
 }
 
 // LINE Messages
-export async function storeLineMessage(userId, userName, content, messageType) {
-  await connectMongoDB();
-  
-  // Create the message
-  const message = await LineMessage.create({
-    userId,
-    userName,
-    content,
-    messageType,
-    isRead: false,
-  });
+export async function storeLineMessage(messageData) {
+  try {
+    await connectMongoDB();
+    
+    const newMessage = new LineMessage({
+      userId: messageData.userId,
+      userName: messageData.userName,
+      content: messageData.content,
+      messageType: messageData.messageType,
+      createdAt: messageData.createdAt,
+      replyTo: messageData.replyTo,
+      isRead: false,
+    });
 
-  // Update the contact's last message
-  if (userId !== 'BOT') {
-    await LineContact.findOneAndUpdate(
-      { userId },
-      {
-        lastMessage: content,
-        lastMessageAt: new Date(),
-      }
-    );
+    const savedMessage = await newMessage.save();
+    return savedMessage;
+  } catch (error) {
+    console.error('Error storing LINE message:', error);
+    throw error;
   }
-
-  return message;
 }
 
 export async function getLineMessages(userId = null) {

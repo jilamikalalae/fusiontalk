@@ -15,6 +15,7 @@ const LinePage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -35,27 +36,50 @@ const LinePage: React.FC = () => {
 
   const filteredMessages = Array.isArray(messages) 
     ? messages
-        .filter((message) => message.userName.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(message => 
+          message.messageType === 'user' && 
+          message.userName.toLowerCase().includes(searchQuery.toLowerCase())
+        )
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : [];
 
   const handleSendMessage = async () => {
-    if (selectedContact && inputMessage.trim()) {
-      try {
-        await fetch('/api/line/push', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: selectedContact.id,
-            message: inputMessage,
-          }),
-        });
-        setInputMessage("");
-      } catch (error) {
-        console.error('Error sending message:', error);
+    if (!selectedContact || !inputMessage.trim()) {
+      alert('Please select a contact and enter a message');
+      return;
+    }
+
+    const messageData = {
+      message: inputMessage,
+      userId: selectedContact.userId
+    };
+    
+    console.log('Sending message data:', messageData);
+
+    try {
+      const response = await fetch('/api/line', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        throw new Error('Failed to send message');
       }
+
+      setInputMessage('');
+      
+      const messagesResponse = await fetch('/api/messages/line');
+      const newMessages = await messagesResponse.json();
+      setMessages(Array.isArray(newMessages) ? newMessages : []);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message');
     }
   };
 
@@ -79,33 +103,32 @@ const LinePage: React.FC = () => {
               />
             </div>
             <ul className="space-y-3">
-              {Array.from(new Set(filteredMessages
-                .filter(message => message.userName !== "LINE User")
-                .map(message => message.userName))).map((userName) => {
-                const userMessages = filteredMessages.filter(message => message.userName === userName);
-                const latestMessage = userMessages[0]; // Get the latest message for this user
+              {Array.from(new Set(filteredMessages.map(message => message.userId)))
+                .map(userId => {
+                  const userMessages = filteredMessages.filter(message => message.userId === userId);
+                  const latestMessage = userMessages[0];
 
-                return (
-                  <li
-                    key={latestMessage.id}
-                    className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
-                      latestMessage.isUnread ? "font-bold" : ""
-                    }`}
-                    onClick={() => setSelectedContact(latestMessage)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full" />
-                      <div>
-                        <p className="font-medium">{userName}</p>
-                        <p className="text-sm text-gray-500">{latestMessage.content}</p>
+                  return (
+                    <li
+                      key={userId}
+                      className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
+                        latestMessage.isUnread ? "font-bold" : ""
+                      }`}
+                      onClick={() => setSelectedContact(latestMessage)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-300 rounded-full" />
+                        <div>
+                          <p className="font-medium">{latestMessage.userName}</p>
+                          <p className="text-sm text-gray-500">{latestMessage.content}</p>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      {new Date(latestMessage.createdAt).toLocaleString()}
-                    </p>
-                  </li>
-                );
-              })}
+                      <p className="text-xs text-gray-400">
+                        {new Date(latestMessage.createdAt).toLocaleString()}
+                      </p>
+                    </li>
+                  );
+                })}
             </ul>
           </CardContent>
         </Card>
@@ -130,22 +153,32 @@ const LinePage: React.FC = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4 flex flex-col-reverse">
               {selectedContact && messages.length > 0 ? (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.userId === "BOT" ? "justify-end" : "justify-start"
-                    }`}
-                  >
+                messages
+                  .filter(msg => {
+                    // Show messages between the selected contact and BOT
+                    return (
+                      msg.userId === selectedContact.userId || 
+                      (msg.userId === 'BOT' && msg.replyTo === selectedContact.userId)
+                    );
+                  })
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((msg) => (
                     <div
-                      className={`max-w-sm p-3 rounded-lg ${
-                        msg.userId === "BOT" ? "bg-blue-500 text-white" : "bg-gray-200"
+                      key={msg.id}
+                      className={`flex ${
+                        // If messageType is 'bot', align right, else align left
+                        msg.messageType === 'bot' ? "justify-end" : "justify-start"
                       }`}
                     >
-                      {msg.content}
+                      <div
+                        className={`max-w-sm p-3 rounded-lg ${
+                          msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="text-center text-gray-500">No messages yet</div>
               )}
