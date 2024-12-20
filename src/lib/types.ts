@@ -7,4 +7,6 @@ export interface Message {
   isUnread?: boolean;
   pictureUrl?: string;
   displayName?: string;
+  messageType: 'user' | 'bot' | string;
+  replyTo?: string;
 } 

@@ -16,6 +16,7 @@ const lineMessageSchema = new mongoose.Schema({
   messageType: {
     type: String,
     enum: ['user', 'bot'],
+    default: 'user',
     required: true,
   },
   createdAt: {
@@ -38,4 +39,4 @@ lineMessageSchema.index({ replyTo: 1 });
 
 const LineMessage = mongoose.models.LineMessage || mongoose.model('LineMessage', lineMessageSchema);
 
-export default LineMessage; 
+export default LineMessage;

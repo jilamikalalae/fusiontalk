@@ -166,13 +166,12 @@ const LinePage: React.FC = () => {
                     <div
                       key={msg.id}
                       className={`flex ${
-                        // If messageType is 'bot', align right, else align left
-                        msg.messageType === 'bot' ? "justify-end" : "justify-start"
+                        (msg.messageType === 'bot' || msg.userId === 'BOT') ? "justify-end" : "justify-start"
                       }`}
                     >
                       <div
                         className={`max-w-sm p-3 rounded-lg ${
-                          msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
+                          (msg.messageType === 'bot' || msg.userId === 'BOT') ? "bg-blue-500 text-white" : "bg-gray-200"
                         }`}
                       >
                         {msg.content}
