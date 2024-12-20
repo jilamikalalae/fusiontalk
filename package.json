@@ -20,7 +20,6 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "20.14.10",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
@@ -67,6 +66,7 @@
     }
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "18.3.14",
     "@types/react-dom": "18.3.2",
