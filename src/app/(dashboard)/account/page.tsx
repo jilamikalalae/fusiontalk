@@ -65,29 +65,27 @@ const AccountManagementPage: React.FC = () => {
       const response = await fetch('/api/users', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(editedProfile),
+        body: JSON.stringify(editedProfile)
       });
 
       if (!response.ok) {
         throw new Error('Failed to update user data');
       }
 
-      const data = await response.json();
-      console.log(data.message);
+      await response.json();
 
       setUserProfile((prev) => ({
         ...prev,
         name: editedProfile.name,
-        email: editedProfile.email,
+        email: editedProfile.email
       }));
       setIsEditing(false);
     } catch (error) {
       console.error(error);
     }
   };
-
 
   if (loading) {
     return <LinearProgress />;
@@ -178,8 +176,6 @@ const AccountManagementPage: React.FC = () => {
           </div>
         )}
       </div>
-
-
 
       {/* Password */}
       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">

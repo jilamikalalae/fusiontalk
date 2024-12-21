@@ -4,6 +4,7 @@ import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
 import { connectMongoDB } from '@/lib/mongodb';
 import bcrypt from 'bcryptjs';
+import { NewResponse } from '@/types/api-response';
 
 type UpdatePasswordRequest = {
   password: string;
@@ -16,10 +17,7 @@ export async function PUT(req: NextRequest) {
     const request: UpdatePasswordRequest = await req.json();
 
     if (!request.password || !request.newPassword || !request.checkPassword) {
-      return NextResponse.json(
-        { message: 'All fields are required.' },
-        { status: 400 }
-      );
+      return NewResponse(400,null,'All fields are required.')
     }
 
     const session = await getServerSession(authOptions as AuthOptions);
@@ -41,32 +39,21 @@ export async function PUT(req: NextRequest) {
     );
 
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { message: 'Current password is incorrect.' },
-        { status: 400 }
-      );
+      return NewResponse(400,null,'Current password is incorrect.')
     }
     // Check if new passwords match
     if (request.newPassword !== request.checkPassword) {
-      return NextResponse.json(
-        { message: "New passwords don't match." },
-        { status: 400 }
-      );
+      return NewResponse(400,null,"New passwords don't match.")
     }
 
     // Hash the new password and update it
     const hashedNewPassword = await bcrypt.hash(request.newPassword, 10);
     await User.findByIdAndUpdate(id, { password: hashedNewPassword });
 
-    return NextResponse.json(
-      { message: 'Password changed successfully.' },
-      { status: 201 }
-    );
+    return NewResponse(200,null,null )
+    
   } catch (error) {
     console.error('Error connecting Line account:', error);
-    return NextResponse.json(
-      { message: 'Failed to connect Line account. Please try again later.' },
-      { status: 500 }
-    );
+    return NewResponse(500,null, 'Failed to connect Line account. Please try again later.' )
   }
 }

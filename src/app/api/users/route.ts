@@ -3,12 +3,13 @@ import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
 import { connectMongoDB } from '@/lib/mongodb';
 import User from '@/models/user';
+import { NewResponse } from '@/types/api-response';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions as AuthOptions);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NewResponse(401,null,'Unauthorized')
     }
 
     const id = session?.user.id;
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     const user = await User.findById(id);
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NewResponse(404, null,'User not found')
     }
 
     let isLineConnected =
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
       isMessengerConnected: false
     };
 
-    return NextResponse.json(userProfile, { status: 200 });
+    return NewResponse(200,userProfile,null)
   } catch (error) {
     console.error('Error connecting Line account:', error);
     return NextResponse.json(

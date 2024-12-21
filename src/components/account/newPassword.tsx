@@ -54,7 +54,7 @@ export default function ChangePasswordDialog() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Failed to change password.');
+        setErrorMessage(errorData.error || 'Failed to change password.');
         return;
       }
 
@@ -140,17 +140,7 @@ export default function ChangePasswordDialog() {
           >
             Forgot your password?
           </Link>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={logoutOtherDevices}
-                onChange={(event) =>
-                  setLogoutOtherDevices(event.target.checked)
-                }
-              />
-            }
-            label="Log out of other devices. Choose this if someone else used your account."
-          />
+          
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
