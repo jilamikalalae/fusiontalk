@@ -24,23 +24,42 @@ export async function PUT(req: NextRequest) {
 
     const session = await getServerSession(authOptions as AuthOptions);
     if (!session) {
-      return NextResponse.json({ status: 401 });
+      return NextResponse.json({ message: 'Unauthorized.' }, { status: 401 });
     }
 
     await connectMongoDB();
     const id = session.user.id;
     const user = await User.findById(id);
 
-    const hashedPassword = await bcrypt.hash(request.password, 10);
-    const hashedNewPassword = await bcrypt.hash(request.checkPassword, 10);
+    // const hashedPassword = await bcrypt.hash(request.password, 10);
+    // const hashedNewPassword = await bcrypt.hash(request.checkPassword, 10);
 
-    if (hashedPassword == user.password) {
-      if (request.newPassword == request.checkPassword) {
-        await User.findByIdAndUpdate(id, { password: hashedNewPassword });
-      }
+    // Check if the current password is correct
+    const isPasswordValid = await bcrypt.compare(
+      request.password,
+      user.password
+    );
+
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { message: 'Current password is incorrect.' },
+        { status: 400 }
+      );
     }
+    // Check if new passwords match
+    if (request.newPassword !== request.checkPassword) {
+      return NextResponse.json(
+        { message: "New passwords don't match." },
+        { status: 400 }
+      );
+    }
+
+    // Hash the new password and update it
+    const hashedNewPassword = await bcrypt.hash(request.newPassword, 10);
+    await User.findByIdAndUpdate(id, { password: hashedNewPassword });
+
     return NextResponse.json(
-      { message: 'Changed password successfully.' },
+      { message: 'Password changed successfully.' },
       { status: 201 }
     );
   } catch (error) {

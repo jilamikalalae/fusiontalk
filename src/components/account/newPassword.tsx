@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
@@ -16,26 +16,56 @@ export default function ChangePasswordDialog() {
   const [open, setOpen] = React.useState(false);
   const [logoutOtherDevices, setLogoutOtherDevices] = React.useState(true);
 
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
   const handleClickOpen = () => {
     setOpen(true);
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
   const handleClose = () => {
     setOpen(false);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const data = {
-      currentPassword: formData.get('currentPassword'),
+      password: formData.get('currentPassword'),
       newPassword: formData.get('newPassword'),
-      retypeNewPassword: formData.get('retypeNewPassword'),
-      logoutOtherDevices
+      checkPassword: formData.get('retypeNewPassword'),
     };
-    console.log(data);
-    handleClose();
+
+    if (data.newPassword !== data.checkPassword) {
+      setErrorMessage("New passwords don't match.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Failed to change password.');
+        return;
+      }
+
+      setSuccessMessage('Password changed successfully.');
+      setTimeout(handleClose, 2000); // Close dialog after success
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setErrorMessage('Something went wrong. Please try again.');
+    }
   };
+
 
   return (
     <React.Fragment>
@@ -67,6 +97,11 @@ export default function ChangePasswordDialog() {
             Your password must be at least 6 characters and should include a
             combination of numbers, letters, and special characters (!@$%^&*).
           </Typography>
+          {errorMessage && <Typography color="error">{errorMessage}</Typography>}
+          {successMessage && (
+            <Typography color="success">{successMessage}</Typography>
+          )}
+
           <TextField
             required
             fullWidth
