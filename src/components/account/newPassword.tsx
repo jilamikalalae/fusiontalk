@@ -44,7 +44,7 @@ export default function ChangePasswordDialog() {
     }
 
     try {
-      const response = await fetch('/api/password', {
+      const response = await fetch('/api/users/password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
