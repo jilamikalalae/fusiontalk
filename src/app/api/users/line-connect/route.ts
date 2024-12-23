@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectMongoDB } from '../../../lib/mongodb';
-import User from '../../../models/user';
+import { connectMongoDB } from '@/lib/mongodb';
+import User from '@/models/user';
 import bcrypt from 'bcryptjs';
 import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
+import { NewResponse } from '@/types/api-response';
 
 export async function POST(req: NextRequest) {
   try {
     const { accessToken, secretToken } = await req.json();
 
     if (!accessToken || !secretToken) {
-      return NextResponse.json(
-        { message: 'All fields are required.' },
-        { status: 400 }
-      );
+      return NewResponse(400, null, 'All fields are required.');
     }
 
     const session = await getServerSession(authOptions as AuthOptions);
     if (!session) {
-      return NextResponse.json({ status: 401 });
+      return NewResponse(401, null, null);
     }
     const id = session?.user.id;
 
@@ -27,7 +25,7 @@ export async function POST(req: NextRequest) {
     const existingUser = await User.findById(id);
 
     if (!existingUser) {
-      return NextResponse.json({ message: 'User not found.' }, { status: 404 });
+      return NewResponse(404, null, null);
     }
 
     const hashedAccessToken = await bcrypt.hash(accessToken, 10);
@@ -38,18 +36,30 @@ export async function POST(req: NextRequest) {
     lineToken.accessToken = hashedAccessToken;
     lineToken.secretToken = hashedSecretToken;
     existingUser.lineToken = lineToken;
-    console.log(existingUser)
     await existingUser.save();
 
-    return NextResponse.json(
-      { message: 'Line account connected successfully.' },
-      { status: 200 }
-    );
+    return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error connecting Line account:', error);
-    return NextResponse.json(
-      { message: 'Failed to connect Line account. Please try again later.' },
-      { status: 500 }
-    );
+    return NewResponse(200, null, null);
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions as AuthOptions);
+    if (!session) {
+      return NewResponse(401, null, 'Unauthorized');
+    }
+    const id = session?.user.id;
+
+    await connectMongoDB();
+
+    const user = await User.findByIdAndUpdate(id, { lineToken : null});
+
+    return NewResponse(200, null, null);
+  } catch (error) {
+    console.error('Error delete line token:', error);
+    return NewResponse(500,null,'Failed to delete line token Please try again later.' )
   }
 }

@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { AuthOptions, getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from 'next/server';
+import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
-import { connectMongoDB } from "@/lib/mongodb";
-import User from "@/models/user";
+import { connectMongoDB } from '@/lib/mongodb';
+import User from '@/models/user';
+import { NewResponse } from '@/types/api-response';
 
 export async function GET(req: NextRequest) {
+  try {
     const session = await getServerSession(authOptions as AuthOptions);
     if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NewResponse(401,null,'Unauthorized')
     }
 
     const id = session?.user.id;
@@ -17,17 +19,49 @@ export async function GET(req: NextRequest) {
     const user = await User.findById(id);
 
     if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NewResponse(404, null,'User not found')
     }
 
-    let isLineConnected = user.lineToken.accessToken && user.lineToken.secretToken != null;
+    let isLineConnected =
+      user.lineToken.accessToken && user.lineToken.secretToken != null;
 
     const userProfile: UserProfile = {
-        name: user.name,
-        email: user.email,
-        isLineConnected: isLineConnected,
-        isMessengerConnected: false,
+      name: user.name,
+      email: user.email,
+      isLineConnected: isLineConnected,
+      isMessengerConnected: false
     };
 
-    return NextResponse.json(userProfile, { status: 200 });
+    return NewResponse(200,userProfile,null)
+  } catch (error) {
+    console.error('Error connecting Line account:', error);
+    return NewResponse(500,null,'Failed to connect Line account. Please try again later.' )
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { name, email } = await req.json();
+
+    if (!name || !email) {
+      return NewResponse(400,null,'All fields can not be empty.')
+    }
+
+    const session = await getServerSession(authOptions as AuthOptions);
+    if (!session) {
+      return NewResponse(401,null,null)
+    }
+
+    const id = session?.user.id;
+
+    await connectMongoDB();
+
+    await User.findByIdAndUpdate(id, { name, email });
+
+    return NewResponse(200,null,'Line account connected successfully.')
+
+  } catch (error) {
+    console.error('Error to update name and email:', error);
+    return NewResponse(500,null,'Failed to update name and Please try again later.')
+  }
 }
