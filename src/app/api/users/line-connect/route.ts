@@ -60,9 +60,6 @@ export async function PUT(req: NextRequest) {
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error delete line token:', error);
-    return NextResponse.json(
-      { message: 'Failed to delete line token Please try again later.' },
-      { status: 500 }
-    );
+    return NewResponse(500,null,'Failed to delete line token Please try again later.' )
   }
 }

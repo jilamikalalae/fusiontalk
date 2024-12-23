@@ -35,10 +35,7 @@ export async function GET(req: NextRequest) {
     return NewResponse(200,userProfile,null)
   } catch (error) {
     console.error('Error connecting Line account:', error);
-    return NextResponse.json(
-      { message: 'Failed to connect Line account. Please try again later.' },
-      { status: 500 }
-    );
+    return NewResponse(500,null,'Failed to connect Line account. Please try again later.' )
   }
 }
 
@@ -47,15 +44,12 @@ export async function PUT(req: NextRequest) {
     const { name, email } = await req.json();
 
     if (!name || !email) {
-      return NextResponse.json(
-        { message: 'All fields can not be empty.' },
-        { status: 400 }
-      );
+      return NewResponse(400,null,'All fields can not be empty.')
     }
 
     const session = await getServerSession(authOptions as AuthOptions);
     if (!session) {
-      return NextResponse.json({ status: 401 });
+      return NewResponse(401,null,null)
     }
 
     const id = session?.user.id;
@@ -64,16 +58,10 @@ export async function PUT(req: NextRequest) {
 
     await User.findByIdAndUpdate(id, { name, email });
 
-    return NextResponse.json(
-        { message: 'Line account connected successfully.' },
-        { status: 200 }
-      );
+    return NewResponse(200,null,'Line account connected successfully.')
 
   } catch (error) {
     console.error('Error to update name and email:', error);
-    return NextResponse.json(
-      { message: 'Failed to update name and Please try again later.' },
-      { status: 500 }
-    );
+    return NewResponse(500,null,'Failed to update name and Please try again later.')
   }
 }
