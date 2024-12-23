@@ -51,7 +51,9 @@ const LinePage: React.FC = () => {
 
     const messageData = {
       message: inputMessage,
-      userId: selectedContact.userId
+      userId: selectedContact.userId,
+      messageType: 'bot',
+      replyTo: selectedContact.userId
     };
     
     console.log('Sending message data:', messageData);
@@ -124,7 +126,7 @@ const LinePage: React.FC = () => {
                         </div>
                       </div>
                       <p className="text-xs text-gray-400">
-                        {new Date(latestMessage.createdAt).toLocaleString()}
+                        {new Date(latestMessage.createdAt).toLocaleDateString()} {new Date(latestMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </li>
                   );
@@ -157,8 +159,8 @@ const LinePage: React.FC = () => {
                   .filter(msg => {
                     // Show messages between the selected contact and BOT
                     return (
-                      msg.userId === selectedContact.userId || 
-                      (msg.userId === 'BOT' && msg.replyTo === selectedContact.userId)
+                      (msg.messageType === 'user' && msg.userId === selectedContact.userId) || 
+                      (msg.messageType === 'bot' && msg.replyTo === selectedContact.userId)
                     );
                   })
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -166,15 +168,20 @@ const LinePage: React.FC = () => {
                     <div
                       key={msg.id}
                       className={`flex ${
-                        (msg.messageType === 'bot' || msg.userId === 'BOT') ? "justify-end" : "justify-start"
+                        msg.messageType === 'bot' ? "justify-end" : "justify-start"
                       }`}
                     >
                       <div
                         className={`max-w-sm p-3 rounded-lg ${
-                          (msg.messageType === 'bot' || msg.userId === 'BOT') ? "bg-blue-500 text-white" : "bg-gray-200"
+                          msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
                         }`}
                       >
-                        {msg.content}
+                        <span className="text-xs text-gray-400">
+                          {new Date(msg.createdAt).toLocaleDateString()} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <div>
+                          {msg.content}
+                        </div>
                       </div>
                     </div>
                   ))
