@@ -36,6 +36,8 @@ export default function LineConnect({
   const [accessToken, setAccessToken] = React.useState('');
   const [secretToken, setSecretToken] = React.useState('');
   const [error, setError] = React.useState('');
+  const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
+
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -43,6 +45,7 @@ export default function LineConnect({
     setAccessToken('');
     setSecretToken('');
     setError('');
+    setUnlinkConfirm(false);
   };
 
   const handleConnect = async () => {
@@ -52,7 +55,7 @@ export default function LineConnect({
     }
 
     try {
-      const response = await fetch('/api/line-connect', {
+      const response = await fetch('/api/users/line-connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken, secretToken })
@@ -73,61 +76,81 @@ export default function LineConnect({
     }
   };
 
+  const handleUnlink = async () => {
+    try {
+      const response = await fetch('/api/users/line-connect', {
+        method: 'PUT'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || 'Unlink failed.');
+        return;
+      }
+
+      if (onConnectionChange) {
+        onConnectionChange(false);
+      }
+      handleClose();
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    }
+  };
+
+  const openUnlinkConfirm = () => setUnlinkConfirm(true);
+
   return (
     <div>
-      <button 
-        onClick={handleOpen}
-        className={className || "px-4 py-2 rounded-lg border-1"}
-      >
-        {children}
-      </button>
-      <Modal open={open} onClose={handleClose}>
-        <Box sx={style}>
-          <Typography variant="h6" component="h2" mb={2}>
-            Connect Line Official Account
-          </Typography>
-          <TextField
-            fullWidth
-            label="Access Token"
-            variant="outlined"
-            margin="normal"
-            value={accessToken}
-            onChange={(e) => setAccessToken(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Secret Token"
-            variant="outlined"
-            margin="normal"
-            value={secretToken}
-            onChange={(e) => setSecretToken(e.target.value)}
-          />
-          {error && (
-            <Typography color="error" variant="body2" mt={2}>
-              {error}
+    <button onClick={handleOpen} className={className || 'px-4 py-2 rounded-lg border-1'}>
+      {children}
+    </button>
+    <Modal open={open} onClose={handleClose}>
+      <Box sx={style}>
+        {!isConnected ? (
+          <>
+            <Typography variant="h6" component="h2" mb={2}>
+              Connect Line Official Account
             </Typography>
-          )}
-          <Button 
-            variant="contained" 
-            color="primary" 
-            fullWidth 
-            onClick={handleConnect}
-            sx={{ mt: 2 }}
-          >
-            Connect
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="secondary" 
-            fullWidth 
-            onClick={handleClose}
-            sx={{ mt: 2 }}
-          >
-            Cancel
-          </Button>
-        </Box>
-      </Modal>
-    </div>
+            <TextField
+              fullWidth
+              label="Access Token"
+              variant="outlined"
+              margin="normal"
+              value={accessToken}
+              onChange={(e) => setAccessToken(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Secret Token"
+              variant="outlined"
+              margin="normal"
+              value={secretToken}
+              onChange={(e) => setSecretToken(e.target.value)}
+            />
+            {error && <Typography color="error">{error}</Typography>}
+            <Button onClick={handleConnect} variant="contained" color="primary" fullWidth>
+              Connect
+            </Button>
+          </>
+        ) : (
+          <>
+            <Typography variant="h6" component="h2" mb={2}>
+              Unlink Line Official Account
+            </Typography>
+            <Typography mb={3}>Are you sure you want to unlink your Line account?</Typography>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Button onClick={handleClose} variant="outlined" color="secondary">
+                Cancel
+              </Button>
+              <Button onClick={handleUnlink} variant="contained" color="error">
+                Unlink
+              </Button>
+            </div>
+          </>
+        )}
+      </Box>
+    </Modal>
+  </div>
   );
 }
 
