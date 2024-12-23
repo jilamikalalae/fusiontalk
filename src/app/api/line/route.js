@@ -99,31 +99,15 @@ export async function POST(req) {
       try {
         // Fetch user profile
         const userProfile = await getLineUserProfile(userId);
-        await upsertLineContact({
-          userId,
-          displayName: userProfile.displayName,
-          pictureUrl: userProfile.pictureUrl,
-          statusMessage: userProfile.statusMessage,
-        });
-
-        // Store user message
-        await storeLineMessage({
-          userId: userId,
-          userName: userProfile.displayName,
-          content: message,
-          messageType: 'user',
-          createdAt: new Date().toISOString()
-        });
-
+        
         // Push the message to the user
-        const botReply = `${message}`;
-        await pushMessageToUser(userId, botReply);
+        await pushMessageToUser(userId, message);
 
-        // Store the bot reply
+        // Store ONLY the bot message
         await storeLineMessage({
           userId: 'BOT',
           userName: 'Bot',
-          content: botReply,
+          content: message,
           messageType: 'bot',
           replyTo: userId,
           createdAt: new Date().toISOString()
