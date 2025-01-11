@@ -2,12 +2,11 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
-interface NotificationContextType {
+type NotificationContextType = {
   unreadCount: number;
-  setUnreadCount: (count: number) => void;
   addUnreadMessage: () => void;
   clearUnreadMessages: () => void;
-}
+};
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -15,7 +14,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadCount, setUnreadCount] = useState(0);
 
   const addUnreadMessage = () => {
-    setUnreadCount(prev => prev + 1);
+    setUnreadCount((prev) => prev + 1);
   };
 
   const clearUnreadMessages = () => {
@@ -26,7 +25,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     <NotificationContext.Provider 
       value={{ 
         unreadCount, 
-        setUnreadCount, 
         addUnreadMessage, 
         clearUnreadMessages 
       }}

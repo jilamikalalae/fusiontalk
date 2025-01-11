@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Message } from "@/lib/types";
+import { useSocket } from '@/hooks/useSocket';
+import io from 'socket.io-client';
 
 // Add new interface for Line Contact
 interface LineContact {
@@ -27,6 +29,8 @@ const LinePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
 
+  const { sendMessage } = useSocket(selectedContact?.userId);
+
   // Fetch contacts
   useEffect(() => {
     const fetchContacts = async () => {
@@ -45,23 +49,53 @@ const LinePage: React.FC = () => {
     fetchContacts();
   }, []);
 
-  // Fetch messages when a contact is selected
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!selectedContact) return;
-      
-      try {
-        const response = await fetch('/api/messages/line');
-        const data = await response.json();
-        setMessages(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        setMessages([]);
-      }
-    };
+  // Fetch messages function
+  const fetchMessages = useCallback(async () => {
+    try {
+      const response = await fetch('/api/messages/line');
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      const data = await response.json();
+      setMessages(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  }, []);
 
-    fetchMessages();
-  }, [selectedContact]);
+  // Initialize socket connection
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
+      path: '/socket.io',
+      transports: ['websocket', 'polling']
+    });
+
+    // Listen for all messages
+    socket.on('receive_message', (message) => {
+      console.log('Received new message:', message);
+      if (selectedContact?.userId === message.replyTo || selectedContact?.userId === message.userId) {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          userId: message.userId,
+          userName: message.userName,
+          content: message.content || message.message,
+          messageType: message.messageType,
+          createdAt: message.createdAt,
+          replyTo: message.replyTo
+        }]);
+      }
+    });
+
+    return () => {
+      socket.off('receive_message');
+      socket.disconnect();
+    };
+  }, [selectedContact?.userId]);
+
+  // Fetch initial messages when contact is selected
+  useEffect(() => {
+    if (selectedContact) {
+      fetchMessages();
+    }
+  }, [selectedContact, fetchMessages]);
 
   const filteredContacts = contacts.filter(contact =>
     contact.displayName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -74,15 +108,33 @@ const LinePage: React.FC = () => {
     }
 
     const messageData = {
+      userId: 'BOT',
+      userName: 'Bot',
       message: inputMessage,
-      userId: selectedContact.userId,
       messageType: 'bot',
       replyTo: selectedContact.userId
     };
-    
-    console.log('Sending message data:', messageData);
 
     try {
+      // Send through socket first for immediate update
+      sendMessage(messageData);
+
+      // Add message to local state immediately
+      const newMessage = {
+        id: Date.now().toString(),
+        userId: 'BOT',
+        userName: 'Bot',
+        content: inputMessage,
+        messageType: 'bot',
+        createdAt: new Date().toISOString(),
+        replyTo: selectedContact.userId
+      };
+      setMessages(prev => [...prev, newMessage]);
+
+      // Clear input
+      setInputMessage('');
+
+      // Send to API for persistence
       const response = await fetch('/api/line', {
         method: 'POST',
         headers: {
@@ -92,16 +144,8 @@ const LinePage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Server error:', errorData);
         throw new Error('Failed to send message');
       }
-
-      setInputMessage('');
-      
-      const messagesResponse = await fetch('/api/messages/line');
-      const newMessages = await messagesResponse.json();
-      setMessages(Array.isArray(newMessages) ? newMessages : []);
 
     } catch (error) {
       console.error('Error sending message:', error);
