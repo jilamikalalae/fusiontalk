@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
 import { NewResponse } from '@/types/api-response';
+import { EncryptString } from '@/lib/crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,14 +29,17 @@ export async function POST(req: NextRequest) {
       return NewResponse(404, null, null);
     }
 
-    const hashedAccessToken = await bcrypt.hash(accessToken, 10);
-    const hashedSecretToken = await bcrypt.hash(secretToken, 10);
+    const encryptAccessToken = EncryptString(accessToken)
+    const encryptSecretToken = EncryptString(secretToken)
 
     // Update user tokens
     let lineToken = {} as any;
-    lineToken.accessToken = hashedAccessToken;
-    lineToken.secretToken = hashedSecretToken;
+    lineToken.accessToken = encryptAccessToken.encrypted;
+    lineToken.accessTokenIv = encryptAccessToken.iv
+    lineToken.secretToken = encryptSecretToken.encrypted;
+    lineToken.secretTokenIv = encryptSecretToken.iv
     existingUser.lineToken = lineToken;
+
     await existingUser.save();
 
     return NewResponse(200, null, null);

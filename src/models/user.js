@@ -6,7 +6,9 @@ const userSchema = new Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     lineToken: {
+      accessTokenIv: {type: String},
       accessToken: { type: String, unique: true },
+      secretTokenIv: {type: String},
       secretToken: { type: String, unique: true }
     }
   },
