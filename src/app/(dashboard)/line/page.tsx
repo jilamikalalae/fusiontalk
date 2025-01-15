@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Message } from "@/lib/types";
 import { useSocket } from '@/hooks/useSocket';
 import io from 'socket.io-client';
 
@@ -21,11 +20,35 @@ interface LineContact {
   lastMessageAt: Date;
 }
 
+// Update Message interface to match new structure
+interface Message {
+  content: string;
+  messageType: 'user' | 'bot';
+  createdAt: string;
+  isRead: boolean;
+}
+
+interface MessageDocument {
+  userId: string;
+  userName: string;
+  messages: Message[];
+}
+
+interface SocketMessage {
+  userId: string;
+  replyTo: string;
+  content: string;
+  message?: string;
+  messageType: 'user' | 'bot';
+  createdAt: string;
+  userName: string;
+}
+
 const LinePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
   const [contacts, setContacts] = useState<LineContact[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageDocuments, setMessageDocuments] = useState<MessageDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
 
@@ -52,14 +75,14 @@ const LinePage: React.FC = () => {
   // Fetch messages function
   const fetchMessages = useCallback(async () => {
     try {
-      const response = await fetch('/api/messages/line');
+      const response = await fetch(`/api/messages/line${selectedContact ? `?userId=${selectedContact.userId}` : ''}`);
       if (!response.ok) throw new Error('Failed to fetch messages');
       const data = await response.json();
-      setMessages(Array.isArray(data) ? data : []);
+      setMessageDocuments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  }, []);
+  }, [selectedContact]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -68,19 +91,38 @@ const LinePage: React.FC = () => {
       transports: ['websocket', 'polling']
     });
 
-    // Listen for all messages
-    socket.on('receive_message', (message) => {
+    socket.on('receive_message', (message: SocketMessage) => {
       console.log('Received new message:', message);
       if (selectedContact?.userId === message.replyTo || selectedContact?.userId === message.userId) {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          userId: message.userId,
-          userName: message.userName,
-          content: message.content || message.message,
-          messageType: message.messageType,
-          createdAt: message.createdAt,
-          replyTo: message.replyTo
-        }]);
+        setMessageDocuments(prev => {
+          const userDocIndex = prev.findIndex(doc => doc.userId === (message.userId || message.replyTo));
+          if (userDocIndex === -1) {
+            // Create new document if none exists
+            return [...prev, {
+              userId: message.userId || message.replyTo,
+              userName: message.userName,
+              messages: [{
+                content: message.content || message.message || '',
+                messageType: message.messageType,
+                createdAt: message.createdAt,
+                isRead: false
+              }]
+            }];
+          }
+          
+          // Add message to existing document
+          const newDocs = [...prev];
+          newDocs[userDocIndex] = {
+            ...newDocs[userDocIndex],
+            messages: [...newDocs[userDocIndex].messages, {
+              content: message.content || message.message || '',
+              messageType: message.messageType,
+              createdAt: message.createdAt,
+              isRead: false
+            }]
+          };
+          return newDocs;
+        });
       }
     });
 
@@ -120,16 +162,31 @@ const LinePage: React.FC = () => {
       sendMessage(messageData);
 
       // Add message to local state immediately
-      const newMessage = {
-        id: Date.now().toString(),
-        userId: 'BOT',
-        userName: 'Bot',
+      const newMessage: Message = {
         content: inputMessage,
         messageType: 'bot',
         createdAt: new Date().toISOString(),
-        replyTo: selectedContact.userId
+        isRead: false
       };
-      setMessages(prev => [...prev, newMessage]);
+      setMessageDocuments(prev => {
+        const userDocIndex = prev.findIndex(doc => doc.userId === selectedContact.userId);
+        if (userDocIndex === -1) {
+          // Create new document if none exists
+          return [...prev, {
+            userId: selectedContact.userId,
+            userName: 'Bot',
+            messages: [newMessage]
+          }];
+        }
+        
+        // Add message to existing document
+        const newDocs = [...prev];
+        newDocs[userDocIndex] = {
+          ...newDocs[userDocIndex],
+          messages: [...newDocs[userDocIndex].messages, newMessage]
+        };
+        return newDocs;
+      });
 
       // Clear input
       setInputMessage('');
@@ -237,18 +294,14 @@ const LinePage: React.FC = () => {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4 p-4 flex flex-col-reverse">
-              {selectedContact && messages.length > 0 ? (
-                messages
-                  .filter(msg => {
-                    return (
-                      (msg.messageType === 'user' && msg.userId === selectedContact.userId) || 
-                      (msg.messageType === 'bot' && msg.replyTo === selectedContact.userId)
-                    );
-                  })
+              {selectedContact && messageDocuments.length > 0 ? (
+                messageDocuments
+                  .filter(doc => doc.userId === selectedContact.userId)
+                  .flatMap(doc => doc.messages)
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .map((msg) => (
+                  .map((msg, index) => (
                     <div
-                      key={msg.id}
+                      key={`${msg.createdAt}-${index}`}
                       className={`flex ${
                         msg.messageType === 'bot' ? "justify-end" : "justify-start"
                       }`}
