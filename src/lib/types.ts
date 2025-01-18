@@ -10,4 +10,13 @@ export interface Message {
   messageType: 'user' | 'bot' | string;
   replyTo?: string;
   platform?: 'line' | 'messenger';
+}
+
+export interface LineContact {
+  userId: string;
+  displayName: string;
+  pictureUrl: string;
+  statusMessage: string;
+  lastMessage: string;
+  lastMessageAt: Date;
 } 
