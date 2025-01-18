@@ -1,24 +1,41 @@
 import { NextResponse } from 'next/server';
 import { storeLineMessage, upsertLineContact } from '@/lib/db';
 import { connectMongoDB } from '@/lib/mongodb';
+import User from '@/models/user';
+import { DecryptString } from '@/lib/crypto';
 
 // Fetch user profile using LINE Messaging API
 async function getLineUserProfile(userId) {
   await connectMongoDB();
 
-  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+
+  console.log(userId)
+
+  const user = await User.findById(userId);
+  // const LineSecretToken = DecryptString(user.lineToken.secretToken,user.lineToken.secretTokenIv)
+  const LineAccessToken = DecryptString(
+    user.lineToken.accessToken,
+    user.lineToken.accessTokenIv
+  );
+
+  console.log(LineAccessToken);
+
+
+  if (!LineAccessToken) {
     throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
   }
 
   const response = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
     headers: {
-      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-    },
+      Authorization: `Bearer ${LineAccessToken}`
+    }
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to get user profile: ${response.statusText} (${errorText})`);
+    throw new Error(
+      `Failed to get user profile: ${response.statusText} (${errorText})`
+    );
   }
 
   return await response.json();
@@ -29,17 +46,19 @@ async function pushMessageToUser(userId, message) {
   const LINE_API_URL = 'https://api.line.me/v2/bot/message/push';
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    Authorization: `Bearer ${LineAccessToken}`
   };
   const body = JSON.stringify({
     to: userId,
-    messages: Array.isArray(message) ? message : [{ type: 'text', text: message }],
+    messages: Array.isArray(message)
+      ? message
+      : [{ type: 'text', text: message }]
   });
 
   const response = await fetch(LINE_API_URL, {
     method: 'POST',
     headers,
-    body,
+    body
   });
 
   if (!response.ok) {
@@ -55,17 +74,17 @@ async function sendLineMessage(replyToken, message) {
   const LINE_API_URL = 'https://api.line.me/v2/bot/message/reply';
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    Authorization: `Bearer ${LineAccessToken}`
   };
   const body = JSON.stringify({
     replyToken,
-    messages: [{ type: 'text', text: message }],
+    messages: [{ type: 'text', text: message }]
   });
 
   const response = await fetch(LINE_API_URL, {
     method: 'POST',
     headers,
-    body,
+    body
   });
 
   if (!response.ok) {
@@ -81,7 +100,7 @@ export async function POST(req) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 
   if (req.method === 'OPTIONS') {
@@ -103,7 +122,7 @@ export async function POST(req) {
           userId,
           displayName: userProfile.displayName,
           pictureUrl: userProfile.pictureUrl,
-          statusMessage: userProfile.statusMessage,
+          statusMessage: userProfile.statusMessage
         });
 
         // Store user message
@@ -140,7 +159,10 @@ export async function POST(req) {
     }
 
     if (!body.events || !Array.isArray(body.events)) {
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400, headers });
+      return NextResponse.json(
+        { error: 'Invalid webhook format' },
+        { status: 400, headers }
+      );
     }
 
     for (const event of body.events) {
@@ -155,7 +177,7 @@ export async function POST(req) {
             userId,
             displayName: userProfile.displayName,
             pictureUrl: userProfile.pictureUrl,
-            statusMessage: userProfile.statusMessage,
+            statusMessage: userProfile.statusMessage
           });
 
           // Store user message
@@ -168,9 +190,10 @@ export async function POST(req) {
           });
 
           // Generate and store bot reply
-          const botReply = userMessage.toLowerCase().trim() === 'hello'
-            ? 'Hello! How can I assist you today?'
-            : `I received your message: "${userMessage}". How can I help you?`;
+          const botReply =
+            userMessage.toLowerCase().trim() === 'hello'
+              ? 'Hello! How can I assist you today?'
+              : `I received your message: "${userMessage}". How can I help you?`;
 
           await storeLineMessage({
             userId: 'BOT',
@@ -204,7 +227,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
   });
 }
