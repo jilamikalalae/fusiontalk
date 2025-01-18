@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -7,8 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSocket } from '@/hooks/useSocket';
-import io from 'socket.io-client';
+import { Message } from "@/lib/types";
 
 // Add new interface for Line Contact
 interface LineContact {
@@ -20,39 +19,13 @@ interface LineContact {
   lastMessageAt: Date;
 }
 
-// Update Message interface to match new structure
-interface Message {
-  content: string;
-  messageType: 'user' | 'bot';
-  createdAt: string;
-  isRead: boolean;
-}
-
-interface MessageDocument {
-  userId: string;
-  userName: string;
-  messages: Message[];
-}
-
-interface SocketMessage {
-  userId: string;
-  replyTo: string;
-  content: string;
-  message?: string;
-  messageType: 'user' | 'bot';
-  createdAt: string;
-  userName: string;
-}
-
 const LinePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
   const [contacts, setContacts] = useState<LineContact[]>([]);
-  const [messageDocuments, setMessageDocuments] = useState<MessageDocument[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
-
-  const { sendMessage } = useSocket(selectedContact?.userId);
 
   // Fetch contacts
   useEffect(() => {
@@ -72,72 +45,23 @@ const LinePage: React.FC = () => {
     fetchContacts();
   }, []);
 
-  // Fetch messages function
-  const fetchMessages = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/messages/line${selectedContact ? `?userId=${selectedContact.userId}` : ''}`);
-      if (!response.ok) throw new Error('Failed to fetch messages');
-      const data = await response.json();
-      setMessageDocuments(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
-  }, [selectedContact]);
-
-  // Initialize socket connection
+  // Fetch messages when a contact is selected
   useEffect(() => {
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
-      path: '/socket.io',
-      transports: ['websocket', 'polling']
-    });
-
-    socket.on('receive_message', (message: SocketMessage) => {
-      console.log('Received new message:', message);
-      if (selectedContact?.userId === message.replyTo || selectedContact?.userId === message.userId) {
-        setMessageDocuments(prev => {
-          const userDocIndex = prev.findIndex(doc => doc.userId === (message.userId || message.replyTo));
-          if (userDocIndex === -1) {
-            // Create new document if none exists
-            return [...prev, {
-              userId: message.userId || message.replyTo,
-              userName: message.userName,
-              messages: [{
-                content: message.content || message.message || '',
-                messageType: message.messageType,
-                createdAt: message.createdAt,
-                isRead: false
-              }]
-            }];
-          }
-          
-          // Add message to existing document
-          const newDocs = [...prev];
-          newDocs[userDocIndex] = {
-            ...newDocs[userDocIndex],
-            messages: [...newDocs[userDocIndex].messages, {
-              content: message.content || message.message || '',
-              messageType: message.messageType,
-              createdAt: message.createdAt,
-              isRead: false
-            }]
-          };
-          return newDocs;
-        });
+    const fetchMessages = async () => {
+      if (!selectedContact) return;
+      
+      try {
+        const response = await fetch('/api/messages/line');
+        const data = await response.json();
+        setMessages(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        setMessages([]);
       }
-    });
-
-    return () => {
-      socket.off('receive_message');
-      socket.disconnect();
     };
-  }, [selectedContact?.userId]);
 
-  // Fetch initial messages when contact is selected
-  useEffect(() => {
-    if (selectedContact) {
-      fetchMessages();
-    }
-  }, [selectedContact, fetchMessages]);
+    fetchMessages();
+  }, [selectedContact]);
 
   const filteredContacts = contacts.filter(contact =>
     contact.displayName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -150,48 +74,15 @@ const LinePage: React.FC = () => {
     }
 
     const messageData = {
-      userId: 'BOT',
-      userName: 'Bot',
       message: inputMessage,
+      userId: selectedContact.userId,
       messageType: 'bot',
       replyTo: selectedContact.userId
     };
+    
+    console.log('Sending message data:', messageData);
 
     try {
-      // Send through socket first for immediate update
-      sendMessage(messageData);
-
-      // Add message to local state immediately
-      const newMessage: Message = {
-        content: inputMessage,
-        messageType: 'bot',
-        createdAt: new Date().toISOString(),
-        isRead: false
-      };
-      setMessageDocuments(prev => {
-        const userDocIndex = prev.findIndex(doc => doc.userId === selectedContact.userId);
-        if (userDocIndex === -1) {
-          // Create new document if none exists
-          return [...prev, {
-            userId: selectedContact.userId,
-            userName: 'Bot',
-            messages: [newMessage]
-          }];
-        }
-        
-        // Add message to existing document
-        const newDocs = [...prev];
-        newDocs[userDocIndex] = {
-          ...newDocs[userDocIndex],
-          messages: [...newDocs[userDocIndex].messages, newMessage]
-        };
-        return newDocs;
-      });
-
-      // Clear input
-      setInputMessage('');
-
-      // Send to API for persistence
       const response = await fetch('/api/line', {
         method: 'POST',
         headers: {
@@ -201,8 +92,16 @@ const LinePage: React.FC = () => {
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
         throw new Error('Failed to send message');
       }
+
+      setInputMessage('');
+      
+      const messagesResponse = await fetch('/api/messages/line');
+      const newMessages = await messagesResponse.json();
+      setMessages(Array.isArray(newMessages) ? newMessages : []);
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -294,14 +193,18 @@ const LinePage: React.FC = () => {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4 p-4 flex flex-col-reverse">
-              {selectedContact && messageDocuments.length > 0 ? (
-                messageDocuments
-                  .filter(doc => doc.userId === selectedContact.userId)
-                  .flatMap(doc => doc.messages)
+              {selectedContact && messages.length > 0 ? (
+                messages
+                  .filter(msg => {
+                    return (
+                      (msg.messageType === 'user' && msg.userId === selectedContact.userId) || 
+                      (msg.messageType === 'bot' && msg.replyTo === selectedContact.userId)
+                    );
+                  })
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .map((msg, index) => (
+                  .map((msg) => (
                     <div
-                      key={`${msg.createdAt}-${index}`}
+                      key={msg.id}
                       className={`flex ${
                         msg.messageType === 'bot' ? "justify-end" : "justify-start"
                       }`}

@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getLineMessages } from '@/lib/db';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // Get userId from query params if provided
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    
-    const messages = await getLineMessages(userId || undefined);
+    const messages = await getLineMessages();
     return NextResponse.json(messages);
   } catch (error) {
     console.error('Error fetching messages:', error);
