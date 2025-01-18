@@ -19,37 +19,9 @@ export async function upsertLineContact({ userId, displayName, pictureUrl, statu
 
 export async function getLineContacts() {
   await connectMongoDB();
-  
-  // Get all contacts
-  const contacts = await LineContact.find({}).lean();
-  
-  // Get the latest message for each contact
-  const contactsWithMessages = await Promise.all(
-    contacts.map(async (contact) => {
-      // Find latest message where either:
-      // - userId matches (user's message)
-      // - replyTo matches (bot's reply)
-      const latestMessage = await LineMessage.findOne({ 
-        $or: [
-          { userId: contact.userId },
-          { replyTo: contact.userId }
-        ]
-      })
-      .sort({ createdAt: -1 })
-      .lean();
-
-      return {
-        ...contact,
-        lastMessage: latestMessage ? latestMessage.content : '',
-        lastMessageAt: latestMessage ? latestMessage.createdAt : contact.lastMessageAt,
-      };
-    })
-  );
-
-  // Sort contacts by latest message timestamp
-  return contactsWithMessages.sort((a, b) => 
-    (b.lastMessageAt || 0) - (a.lastMessageAt || 0)
-  );
+  return await LineContact.find({})
+    .sort({ lastMessageAt: -1 })
+    .lean();
 }
 
 // LINE Messages

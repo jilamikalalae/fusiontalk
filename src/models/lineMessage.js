@@ -1,14 +1,6 @@
 import mongoose from 'mongoose';
 
-const lineMessageSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: true,
-  },
-  userName: {
-    type: String,
-    required: true,
-  },
+const messageSchema = new mongoose.Schema({
   content: {
     type: String,
     required: true,
@@ -23,19 +15,28 @@ const lineMessageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  replyTo: {
-    type: String,
-    required: false,
-  },
   isRead: {
     type: Boolean,
     default: false,
   }
+});
+
+const lineMessageSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  userName: {
+    type: String,
+    required: true,
+  },
+  messages: [messageSchema]
 }, { timestamps: true });
 
-// Add indexes if needed
-lineMessageSchema.index({ userId: 1, createdAt: -1 });
-lineMessageSchema.index({ replyTo: 1 });
+// Add index for userId
+lineMessageSchema.index({ userId: 1 });
+lineMessageSchema.index({ 'messages.createdAt': -1 });
 
 const LineMessage = mongoose.models.LineMessage || mongoose.model('LineMessage', lineMessageSchema);
 
