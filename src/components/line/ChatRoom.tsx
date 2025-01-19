@@ -46,16 +46,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         <div className="flex-1 overflow-y-auto space-y-4 p-4 flex flex-col-reverse">
           {selectedContact && messages.length > 0 ? (
             messages
-              .filter(msg => {
-                return (
-                  (msg.messageType === 'user' && msg.userId === selectedContact.userId) || 
-                  (msg.messageType === 'bot' && msg.replyTo === selectedContact.userId)
-                );
-              })
-              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .filter(msg => msg.userId === selectedContact.userId)
+              .flatMap(doc => doc.messages)
+              .sort((a, b) => (b?.createdAt ? new Date(b.createdAt).getTime() : 0) - (a?.createdAt ? new Date(a.createdAt).getTime() : 0))
+              .filter((msg): msg is { _id: string; content: string; messageType: "user" | "bot"; createdAt: Date } => msg !== undefined)
               .map((msg) => (
                 <div
-                  key={msg.id}
+                  key={msg._id}
                   className={`flex ${
                     msg.messageType === 'bot' ? "justify-end" : "justify-start"
                   }`}

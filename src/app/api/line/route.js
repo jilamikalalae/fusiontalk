@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { storeLineMessage, upsertLineContact } from '@/lib/db';
 import { connectMongoDB } from '@/lib/mongodb';
+import LineMessage from '@/models/lineMessage';
 
 // Fetch user profile using LINE Messaging API
 async function getLineUserProfile(userId) {
-  await connectMongoDB();
-
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
     throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
   }
@@ -47,7 +45,7 @@ async function pushMessageToUser(userId, message) {
     throw new Error(`LINE API error: ${response.status} ${errorData}`);
   }
 
-  return response.json(); // Return the response body for further processing
+  return response.json();
 }
 
 // Reply to a message using replyToken
@@ -73,10 +71,9 @@ async function sendLineMessage(replyToken, message) {
     throw new Error(`LINE API error: ${response.status} ${errorData}`);
   }
 
-  return response.json(); // Return the response body
+  return response.json();
 }
 
-// Webhook handler
 export async function POST(req) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -89,93 +86,71 @@ export async function POST(req) {
   }
 
   try {
+    await connectMongoDB();
     const body = await req.json();
     console.log('Received webhook body:', JSON.stringify(body, null, 2));
 
-    if (body.userId && body.message) {
-      // Direct message to a user
-      const { userId, message } = body;
-
+    // Handle direct messages from frontend (bot sending message)
+    if (body.userId && body.message && !body.events) {
       try {
-        // Fetch user profile
-        const userProfile = await getLineUserProfile(userId);
+        // Send message to LINE user
+        await pushMessageToUser(body.userId, body.message);
         
-        // Push the message to the user
-        await pushMessageToUser(userId, message);
-
-        // Store ONLY the bot message
-        await storeLineMessage({
-          userId: 'BOT',
-          userName: 'Bot',
-          content: message,
-          messageType: 'bot',
-          replyTo: userId,
-          createdAt: new Date().toISOString()
-        });
+        // Save only as bot message
+        await LineMessage.addMessage(
+          body.userId,
+          'Bot',
+          body.message,
+          'bot'
+        );
 
         return NextResponse.json({ success: true }, { headers });
       } catch (error) {
-        console.error('Error sending direct message:', error);
+        console.error('Error:', error);
         return NextResponse.json(
-          { error: 'Failed to send message', details: error.message },
+          { error: error.message || 'Failed to process message' },
           { status: 500, headers }
         );
       }
     }
 
-    if (!body.events || !Array.isArray(body.events)) {
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400, headers });
-    }
+    // Handle LINE webhook events (user messages)
+    if (body.events && Array.isArray(body.events)) {
+      for (const event of body.events) {
+        if (event.type === 'message' && event.message.type === 'text') {
+          const userMessage = event.message.text;
+          const userId = event.source.userId;
 
-    for (const event of body.events) {
-      if (event.type === 'message' && event.message.type === 'text') {
-        const userMessage = event.message.text;
-        const userId = event.source.userId;
-
-        try {
-          // Fetch user profile
+          // Get user profile
           const userProfile = await getLineUserProfile(userId);
-          await upsertLineContact({
+
+          // Save user message
+          await LineMessage.addMessage(
             userId,
-            displayName: userProfile.displayName,
-            pictureUrl: userProfile.pictureUrl,
-            statusMessage: userProfile.statusMessage,
-          });
+            userProfile.displayName,
+            userMessage,
+            'user'
+          );
 
-          // Store user message
-          await storeLineMessage({
-            userId: userId,
-            userName: userProfile.displayName,
-            content: userMessage,
-            messageType: 'user',
-            createdAt: new Date().toISOString()
-          });
-
-          // Generate and store bot reply
-          const botReply = userMessage.toLowerCase().trim() === 'hello'
-            ? 'Hello! How can I assist you today?'
-            : `I received your message: "${userMessage}". How can I help you?`;
-
-          await storeLineMessage({
-            userId: 'BOT',
-            userName: 'Bot',
-            content: botReply,
-            messageType: 'bot',
-            replyTo: userId,
-            createdAt: new Date().toISOString()
-          });
+          // Send and save bot response
+          const botReply = `I received: "${userMessage}"`;
           await sendLineMessage(event.replyToken, botReply);
-        } catch (error) {
-          console.error('Error processing event:', error);
+          await LineMessage.addMessage(
+            userId,
+            'Bot',
+            botReply,
+            'bot'
+          );
         }
       }
+      return NextResponse.json({ status: 'ok' }, { headers });
     }
 
-    return NextResponse.json({ status: 'ok' }, { headers });
+    return NextResponse.json({ error: 'Invalid request format' }, { status: 400, headers });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: error.message || 'Internal server error' },
       { status: 500, headers }
     );
   }

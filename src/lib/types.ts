@@ -10,6 +10,12 @@ export interface Message {
   messageType: 'user' | 'bot' | string;
   replyTo?: string;
   platform?: 'line' | 'messenger';
+  messages?: {
+    _id: string;
+    content: string;
+    messageType: 'user' | 'bot';
+    createdAt: Date;
+  }[];
 }
 
 export interface LineContact {

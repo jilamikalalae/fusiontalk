@@ -36,7 +36,7 @@ const LinePage: React.FC = () => {
       if (!selectedContact) return;
       
       try {
-        const response = await fetch('/api/messages/line');
+        const response = await fetch(`/api/messages/line?userId=${selectedContact.userId}`);
         const data = await response.json();
         setMessages(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -55,10 +55,10 @@ const LinePage: React.FC = () => {
     }
 
     const messageData = {
-      message: inputMessage,
       userId: selectedContact.userId,
-      messageType: 'bot',
-      replyTo: selectedContact.userId
+      userName: selectedContact.displayName,
+      message: inputMessage,
+      messageType: 'user'
     };
     
     console.log('Sending message data:', messageData);
@@ -80,7 +80,7 @@ const LinePage: React.FC = () => {
 
       setInputMessage('');
       
-      const messagesResponse = await fetch('/api/messages/line');
+      const messagesResponse = await fetch(`/api/messages/line?userId=${selectedContact.userId}`);
       const newMessages = await messagesResponse.json();
       setMessages(Array.isArray(newMessages) ? newMessages : []);
 
