@@ -9,7 +9,8 @@ const userSchema = new Schema(
       accessTokenIv: {type: String},
       accessToken: { type: String, unique: true },
       secretTokenIv: {type: String},
-      secretToken: { type: String, unique: true }
+      secretToken: { type: String, unique: true },
+      userId: { type: String, unique: true },
     }
   },
   { timestamps: true },

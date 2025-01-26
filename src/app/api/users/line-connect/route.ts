@@ -9,9 +9,9 @@ import { EncryptString } from '@/lib/crypto';
 
 export async function POST(req: NextRequest) {
   try {
-    const { accessToken, secretToken } = await req.json();
+    const { accessToken, secretToken, userId } = await req.json();
 
-    if (!accessToken || !secretToken) {
+    if (!accessToken || !secretToken || !userId) {
       return NewResponse(400, null, 'All fields are required.');
     }
 
@@ -31,17 +31,20 @@ export async function POST(req: NextRequest) {
 
     const encryptAccessToken = EncryptString(accessToken)
     const encryptSecretToken = EncryptString(secretToken)
+    const encryptUserId = EncryptString(userId)
 
     // Update user tokens
     let lineToken = {} as any;
     lineToken.accessToken = encryptAccessToken.encrypted;
-    lineToken.accessTokenIv = encryptAccessToken.iv
+    lineToken.accessTokenIv = encryptAccessToken.iv;
     lineToken.secretToken = encryptSecretToken.encrypted;
-    lineToken.secretTokenIv = encryptSecretToken.iv
+    lineToken.secretTokenIv = encryptSecretToken.iv;
+    lineToken.userId = encryptUserId.encrypted;
+    lineToken.userIdIv = encryptUserId.iv;
     existingUser.lineToken = lineToken;
+    console.log(existingUser)
 
     await existingUser.save();
-
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error connecting Line account:', error);
