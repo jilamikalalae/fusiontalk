@@ -33,7 +33,32 @@ const LinePage: React.FC = () => {
       try {
         const response = await fetch('/api/contacts/line');
         const data = await response.json();
-        setContacts(Array.isArray(data) ? data : []);
+        
+        // Fetch all messages first
+        const messagesResponse = await fetch('/api/messages/line');
+        const allMessages = await messagesResponse.json();
+        const messageArray = Array.isArray(allMessages) ? allMessages : [];
+        
+        // Process contacts with their latest messages
+        const contactsWithMessages = (Array.isArray(data) ? data : []).map((contact) => {
+          // Find the latest message for this contact
+          const contactMessages = messageArray.filter(msg => 
+            (msg.messageType === 'user' && msg.userId === contact.userId) || 
+            (msg.messageType === 'bot' && msg.replyTo === contact.userId)
+          );
+          
+          const latestMessage = contactMessages.length > 0 
+            ? contactMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+            : null;
+          
+          return {
+            ...contact,
+            lastMessage: latestMessage ? latestMessage.content : '',
+            lastMessageAt: latestMessage ? latestMessage.createdAt : null
+          };
+        });
+
+        setContacts(contactsWithMessages);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching contacts:', error);
