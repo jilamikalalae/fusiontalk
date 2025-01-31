@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectMongoDB } from '@/lib/mongodb';
 import User from '@/models/user';
-import bcrypt from 'bcryptjs';
 import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
 import { NewResponse } from '@/types/api-response';
@@ -42,13 +41,13 @@ export async function POST(req: NextRequest) {
     lineToken.userId = encryptUserId.encrypted;
     lineToken.userIdIv = encryptUserId.iv;
     existingUser.lineToken = lineToken;
-    console.log(existingUser)
+    // console.log(existingUser)
 
     await existingUser.save();
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error connecting Line account:', error);
-    return NewResponse(200, null, null);
+    return NewResponse(500, null, null);
   }
 }
 

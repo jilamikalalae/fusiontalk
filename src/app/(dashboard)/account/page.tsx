@@ -8,6 +8,7 @@ import NewPassword from '@/components/account/newPassword';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import LineConnect from '@/components/account/lineConnect';
+import MessengerConnect from '@/components/account/messengerConnect';
 
 const AccountManagementPage: React.FC = () => {
   const { data: session } = useSession();
@@ -217,17 +218,17 @@ const AccountManagementPage: React.FC = () => {
                 Connect your Messenger account.
               </p>
             </div>
-            <LineConnect
+            <MessengerConnect
               className={`px-4 py-2 rounded-lg border-2 ${
                 userProfile.isMessengerConnected
-                  ? 'border-green-500 text-green-500 bg-white'
+                  ? 'border-red-500 text-red-500 bg-white'
                   : 'border-gray-300 text-gray-700 bg-white'
               }`}
               onConnectionChange={handleConnectionMessenger}
-              isConnected={userProfile.isLineConnected}
+              isConnected={userProfile.isMessengerConnected}
             >
               {userProfile.isMessengerConnected ? 'Unlink' : 'Link'}
-            </LineConnect>
+            </MessengerConnect>
           </li>
         </ul>
       </div>

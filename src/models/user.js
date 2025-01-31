@@ -1,3 +1,4 @@
+import { access } from 'fs';
 import mongoose, { Schema } from 'mongoose';
 
 const userSchema = new Schema(
@@ -10,6 +11,13 @@ const userSchema = new Schema(
       accessToken: { type: String, unique: true },
       secretTokenIv: {type: String},
       secretToken: { type: String, unique: true },
+      userIdIv: { type: String, unique: true },
+      userId: { type: String, unique: true },
+    },
+    messengerToken: {
+      accessTokenIv: {type: String},
+      accessToken: { type: String, unique: true },
+      userIdIv: { type: String},
       userId: { type: String, unique: true },
     }
   },
