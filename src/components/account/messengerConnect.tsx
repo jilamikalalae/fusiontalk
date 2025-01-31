@@ -31,8 +31,35 @@ export default function MessengerConnect({
   const [userId, setUserId] = React.useState('');
   const [error, setError] = React.useState('');
   const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
+  const [connectionTime, setConnectionTime] = React.useState<number | null>(null);
 
-  const handleOpen = () => setOpen(true);
+  React.useEffect(() => {
+    // Check if there is a saved connection time
+    const savedTime = localStorage.getItem('messengerConnectionTime');
+    if (savedTime) {
+      setConnectionTime(Number(savedTime));
+      checkTokenExpiration(Number(savedTime));
+    }
+  }, []);
+
+  const checkTokenExpiration = (time: number) => {
+    const now = Date.now();
+    const elapsedTime = now - time;
+    const hoursPassed = elapsedTime / (1000 * 60 * 60); // Convert ms to hours
+
+    if (hoursPassed >= 24) {
+      setError('Access token has expired. Please type again.');
+      handleUnlink(); // Automatically unlink if expired
+    }
+  };
+
+  const handleOpen = () => {
+    setOpen(true);
+    if (connectionTime) {
+      checkTokenExpiration(connectionTime);
+    }
+  };
+
   const handleClose = () => {
     setOpen(false);
     setAccessToken('');
@@ -60,6 +87,10 @@ export default function MessengerConnect({
         return;
       }
 
+      // Save connection timestamp
+      localStorage.setItem('messengerConnectionTime', Date.now().toString());
+      setConnectionTime(Date.now());
+
       if (onConnectionChange) {
         onConnectionChange(true);
       }
@@ -81,6 +112,10 @@ export default function MessengerConnect({
         return;
       }
 
+      // Remove saved connection time
+      localStorage.removeItem('messengerConnectionTime');
+      setConnectionTime(null);
+
       if (onConnectionChange) {
         onConnectionChange(false);
       }
@@ -90,10 +125,6 @@ export default function MessengerConnect({
     }
   };
 
-  const openUnlinkConfirm = () => setUnlinkConfirm(true);
-
-  const preventDefault = (event: React.SyntheticEvent) =>
-    event.preventDefault();
   return (
     <div>
       <button
@@ -147,7 +178,7 @@ export default function MessengerConnect({
                 Unlink Messenger Account
               </Typography>
               <Typography mb={3}>
-                Are you sure you want to unlink your Line account?
+                Are you sure you want to unlink your Messenger account?
               </Typography>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button
