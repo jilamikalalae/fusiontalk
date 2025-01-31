@@ -92,6 +92,8 @@ export default function MessengerConnect({
 
   const openUnlinkConfirm = () => setUnlinkConfirm(true);
 
+  const preventDefault = (event: React.SyntheticEvent) =>
+    event.preventDefault();
   return (
     <div>
       <button
@@ -107,6 +109,10 @@ export default function MessengerConnect({
               <Typography variant="h6" component="h2" mb={2}>
                 Connect Messenger Account
               </Typography>
+              <Button variant="outlined" href="https://developers.facebook.com/tools/explorer/" target="_blank">
+                Generate Access Token
+              </Button>
+
               <TextField
                 fullWidth
                 label="Access Token"
@@ -118,7 +124,7 @@ export default function MessengerConnect({
 
               <TextField
                 fullWidth
-                label="Access Token"
+                label="User Id"
                 variant="outlined"
                 margin="normal"
                 value={userId}
