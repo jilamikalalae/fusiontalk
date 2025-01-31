@@ -8,108 +8,106 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { inboxMessages, chatMessagesData, type Message, type ChatMessage } from "@/lib/store/messages";
+import { inboxMessages, type Message, type ChatMessage } from "@/lib/store/messages";
+
+interface Participant {
+  id: string;
+  name: string;
+}
+
+interface Contact {
+  id: string;
+  participants: {
+    data: Participant[];
+  };
+  messages: {
+    data: ChatMessage[];
+  };
+}
 
 const MessengerPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedContact, setSelectedContact] = useState<Message | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Record<number, ChatMessage[]>>(chatMessagesData);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom of messages
-  const scrollToBottom = () => {
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch("/api/meta");
+        const data = await response.json();
+        setContacts(data.data || []);
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      }
+    };
+
+    fetchConversations();
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleContactClick = (contact: Contact) => {
+    setSelectedContact(contact);
+    setMessages(contact.messages.data || []);
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [chatMessages]);
-
-  // Simulate typing indicator
-  useEffect(() => {
-    let typingTimer: NodeJS.Timeout;
-    if (newMessage) {
-      setIsTyping(true);
-      typingTimer = setTimeout(() => {
-        setIsTyping(false);
-      }, 1000);
-    } else {
-      setIsTyping(false);
-    }
-    return () => clearTimeout(typingTimer);
-  }, [newMessage]);
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
 
-    const currentTime = new Date().toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     const newChatMessage: ChatMessage = {
-      id: chatMessages[selectedContact.id]?.length + 1 || 1,
+      id: messages.length + 1,
       sender: "user",
       text: newMessage,
       time: currentTime,
-      status: "sending"
+      status: "sending",
     };
 
-    // Update chat messages
-    setChatMessages(prev => ({
-      ...prev,
-      [selectedContact.id]: [...(prev[selectedContact.id] || []), newChatMessage]
-    }));
+    setMessages([...messages, newChatMessage]);
 
-    // Clear input
-    setNewMessage("");
+    try {
+      const response = await fetch("/api/meta", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient_id: selectedContact.id,
+          message: newMessage,
+        }),
+      });
 
-    // Simulate message status updates
-    setTimeout(() => {
-      setChatMessages(prev => ({
-        ...prev,
-        [selectedContact.id]: prev[selectedContact.id].map(msg => 
+      if (response.ok) {
+        setMessages(messages.map((msg) =>
           msg.id === newChatMessage.id ? { ...msg, status: "sent" } : msg
-        )
-      }));
-    }, 500);
+        ));
+      } else {
+        console.error("Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
 
-    setTimeout(() => {
-      setChatMessages(prev => ({
-        ...prev,
-        [selectedContact.id]: prev[selectedContact.id].map(msg => 
-          msg.id === newChatMessage.id ? { ...msg, status: "delivered" } : msg
-        )
-      }));
-    }, 1000);
-
-    // Simulate recipient reading the message
-    setTimeout(() => {
-      setChatMessages(prev => ({
-        ...prev,
-        [selectedContact.id]: prev[selectedContact.id].map(msg => 
-          msg.id === newChatMessage.id ? { ...msg, status: "read" } : msg
-        )
-      }));
-    }, 2000);
+    setNewMessage("");
   };
 
-  const filteredMessages = inboxMessages
-    .filter((message) => message.type === "messenger")
-    .filter((message) => 
-      message.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredContacts = contacts.filter((contact) =>
+    contact.participants.data[0].name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="w-1/4 bg-white border-r">
         <Card>
           <CardHeader>
-            <CardTitle>Inbox</CardTitle>
-            <CardDescription>Newest ↑</CardDescription>
+            <CardTitle>Contacts</CardTitle>
+            <CardDescription>Select a contact to view messages</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -122,24 +120,21 @@ const MessengerPage: React.FC = () => {
               />
             </div>
             <ul className="space-y-3">
-              {filteredMessages.map((message) => (
+              {filteredContacts.map((contact) => (
                 <li
-                  key={message.id}
-                  className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
-                    message.isUnread ? "font-bold" : ""
-                  } ${selectedContact?.id === message.id ? "bg-gray-200" : ""}`}
-                  onClick={() => setSelectedContact(message)}
+                  key={contact.id}
+                  className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer"
+                  onClick={() => handleContactClick(contact)}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">MSG</span>
                     </div>
                     <div>
-                      <p className="font-medium">{message.name}</p>
-                      <p className="text-sm text-gray-500">{message.preview}</p>
+                      <p className="font-medium">{contact.participants.data[0].name}</p>
+                      <p className="text-sm text-gray-500">ID: {contact.participants.data[0].id}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400">{message.time}</p>
                 </li>
               ))}
             </ul>
@@ -147,103 +142,46 @@ const MessengerPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Chat Area */}
       <div className="w-3/4 p-6">
         <Card className="h-full">
           {selectedContact ? (
-            <>
-              {/* Chat Header */}
-              <div className="p-4 border-b">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">MSG</span>
+            <CardContent className="flex flex-col h-full justify-between">
+              <div className="flex-1 overflow-y-auto space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="flex justify-start">
+                    <div className="max-w-sm p-3 rounded-lg bg-gray-200">
+                      <p>{msg.message}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-semibold">{selectedContact.name}</h2>
-                    <p className="text-sm text-gray-500">Messenger Chat</p>
-                  </div>
-                </div>
+                ))}
+                <div ref={messagesEndRef} />
               </div>
 
-              <CardContent className="flex flex-col h-[calc(100%-80px)] justify-between">
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-4">
-                  {selectedContact && chatMessagesData[selectedContact.id] ? (
-                    chatMessagesData[selectedContact.id].map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${
-                          msg.sender === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`max-w-sm p-3 rounded-lg ${
-                            msg.sender === "user"
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-200"
-                          }`}
-                        >
-                          <p>{msg.text}</p>
-                          <div className="flex items-center justify-end space-x-1 text-xs mt-1">
-                            <span className="opacity-70">{msg.time}</span>
-                            {msg.sender === "user" && msg.status && (
-                              <span className="opacity-70">
-                                {msg.status === "sending" && "●"}
-                                {msg.status === "sent" && "✓"}
-                                {msg.status === "delivered" && "✓✓"}
-                                {msg.status === "read" && (
-                                  <span className="text-blue-300">✓✓</span>
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-gray-500">No messages yet</div>
-                  )}
-                  {isTyping && selectedContact && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-200 p-3 rounded-lg">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input Box */}
-                <div className="flex items-center space-x-3 border-t p-3">
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <button 
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim() || !selectedContact}
-                  >
-                    Send
-                  </button>
-                </div>
-              </CardContent>
-            </>
+              <div className="flex items-center space-x-3 border-t p-3">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || !selectedContact}
+                >
+                  Send
+                </button>
+              </div>
+            </CardContent>
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500">
-              Select a contact to start chatting
+              Select a contact to view messages
             </div>
           )}
         </Card>
