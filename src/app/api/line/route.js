@@ -150,21 +150,6 @@ export async function POST(req) {
             messageType: 'user',
             createdAt: new Date().toISOString()
           });
-
-          // Generate and store bot reply
-          const botReply = userMessage.toLowerCase().trim() === 'hello'
-            ? 'Hello! How can I assist you today?'
-            : `I received your message: "${userMessage}". How can I help you?`;
-
-          await storeLineMessage({
-            userId: 'BOT',
-            userName: 'Bot',
-            content: botReply,
-            messageType: 'bot',
-            replyTo: userId,
-            createdAt: new Date().toISOString()
-          });
-          await sendLineMessage(event.replyToken, botReply);
         } catch (error) {
           console.error('Error processing event:', error);
         }
