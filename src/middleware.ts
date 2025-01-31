@@ -14,6 +14,10 @@ export default withAuth(
   );
 
   export const config = {
+<<<<<<< HEAD
     matcher: ['/((?!api/auth|api/register|login|register|api/socket|api/line).*)'],
+=======
+    matcher: ['/((?!api/auth|api/register|login|register|api/meta|api/line).*)'],
+>>>>>>> 5cfae327f92bfdea242cfada24d6ecdb1866d932
   };
   

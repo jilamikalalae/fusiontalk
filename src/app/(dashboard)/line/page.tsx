@@ -46,6 +46,10 @@ const LinePage: React.FC = () => {
     };
 
     fetchMessages();
+
+    const intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, [selectedContact]);
 
   const handleSendMessage = async () => {
