@@ -12,13 +12,15 @@ async function getLineUserProfile(userId) {
 
   const response = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
     headers: {
-      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-    },
+      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+    }
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to get user profile: ${response.statusText} (${errorText})`);
+    throw new Error(
+      `Failed to get user profile: ${response.statusText} (${errorText})`
+    );
   }
 
   return await response.json();
@@ -29,17 +31,19 @@ async function pushMessageToUser(userId, message) {
   const LINE_API_URL = 'https://api.line.me/v2/bot/message/push';
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
   };
   const body = JSON.stringify({
     to: userId,
-    messages: Array.isArray(message) ? message : [{ type: 'text', text: message }],
+    messages: Array.isArray(message)
+      ? message
+      : [{ type: 'text', text: message }]
   });
 
   const response = await fetch(LINE_API_URL, {
     method: 'POST',
     headers,
-    body,
+    body
   });
 
   if (!response.ok) {
@@ -55,17 +59,17 @@ async function sendLineMessage(replyToken, message) {
   const LINE_API_URL = 'https://api.line.me/v2/bot/message/reply';
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
   };
   const body = JSON.stringify({
     replyToken,
-    messages: [{ type: 'text', text: message }],
+    messages: [{ type: 'text', text: message }]
   });
 
   const response = await fetch(LINE_API_URL, {
     method: 'POST',
     headers,
-    body,
+    body
   });
 
   if (!response.ok) {
@@ -81,7 +85,7 @@ export async function POST(req) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 
   if (req.method === 'OPTIONS') {
@@ -99,7 +103,7 @@ export async function POST(req) {
       try {
         // Fetch user profile
         const userProfile = await getLineUserProfile(userId);
-        
+
         // Push the message to the user
         await pushMessageToUser(userId, message);
 
@@ -124,7 +128,10 @@ export async function POST(req) {
     }
 
     if (!body.events || !Array.isArray(body.events)) {
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400, headers });
+      return NextResponse.json(
+        { error: 'Invalid webhook format' },
+        { status: 400, headers }
+      );
     }
 
     for (const event of body.events) {
@@ -139,7 +146,7 @@ export async function POST(req) {
             userId,
             displayName: userProfile.displayName,
             pictureUrl: userProfile.pictureUrl,
-            statusMessage: userProfile.statusMessage,
+            statusMessage: userProfile.statusMessage
           });
 
           // Store user message
@@ -152,19 +159,20 @@ export async function POST(req) {
           });
 
           // Generate and store bot reply
-          const botReply = userMessage.toLowerCase().trim() === 'hello'
-            ? 'Hello! How can I assist you today?'
-            : `I received your message: "${userMessage}". How can I help you?`;
+          // const botReply =
+          //   userMessage.toLowerCase().trim() === 'hello'
+          //     ? 'Hello! How can I assist you today?'
+          //     : `${userMessage}`;
 
-          await storeLineMessage({
-            userId: 'BOT',
-            userName: 'Bot',
-            content: botReply,
-            messageType: 'bot',
-            replyTo: userId,
-            createdAt: new Date().toISOString()
-          });
-          await sendLineMessage(event.replyToken, botReply);
+          // await storeLineMessage({
+          //   userId: 'BOT',
+          //   userName: 'Bot',
+          //   content: botReply,
+          //   messageType: 'bot',
+          //   replyTo: userId,
+          //   createdAt: new Date().toISOString()
+          // });
+          // await sendLineMessage(event.replyToken, botReply);
         } catch (error) {
           console.error('Error processing event:', error);
         }
@@ -188,7 +196,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
   });
 }
