@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
-import { connectMongoDB } from "../../../lib/mongodb";
-import User from "../../../models/user";
-import bcrypt from "bcryptjs";
-
+import { NextResponse } from 'next/server';
+import { connectMongoDB } from '../../../lib/mongodb';
+import User from '../../../models/user';
+import bcrypt from 'bcryptjs';
 
 export async function POST(req) {
   try {
@@ -10,7 +9,7 @@ export async function POST(req) {
 
     if (!name || !email || !password) {
       return NextResponse.json(
-        { message: "All fields are required." },
+        { message: 'All fields are required.' },
         { status: 400 }
       );
     }
@@ -19,7 +18,7 @@ export async function POST(req) {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
-        { message: "Email already in use." },
+        { message: 'Email already in use.' },
         { status: 409 }
       );
     }
@@ -28,13 +27,13 @@ export async function POST(req) {
     await User.create({ name, email, password: hashedPassword });
 
     return NextResponse.json(
-      { message: "User registered successfully." },
+      { message: 'User registered successfully.' },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error during registration:", error.message);
+    console.error('Error during registration:', error.message);
     return NextResponse.json(
-      { message: "Failed to register user. Please try again later." },
+      { message: 'Failed to register user. Please try again later.' },
       { status: 500 }
     );
   }

@@ -29,7 +29,7 @@ const AccountManagementPage: React.FC = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch('/api/users', { method: 'GET' });
+        const response = await fetch('/api/users/v2', { method: 'GET' });
         if (!response.ok) {
           throw new Error('Failed to fetch user data');
         }
