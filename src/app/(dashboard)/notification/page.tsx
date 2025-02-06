@@ -34,6 +34,8 @@ const NotiPage: React.FC = () => {
     };
 
     fetchMessages();
+    const intervalId = setInterval(fetchMessages, 3000);
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, []);
 
   const filteredMessages = Array.isArray(messages) 
