@@ -55,12 +55,13 @@ const MessengerPage: React.FC = () => {
     setSelectedContact(contact);
     setMessages(contact.messages.data || []);
   };
+  
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
-
+  
     const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
+  
     const newChatMessage: ChatMessage = {
       id: messages.length + 1,
       sender: "user",
@@ -68,9 +69,9 @@ const MessengerPage: React.FC = () => {
       time: currentTime,
       status: "sending",
     };
-
+  
     setMessages([...messages, newChatMessage]);
-
+  
     try {
       const response = await fetch("/api/meta", {
         method: "POST",
@@ -78,11 +79,11 @@ const MessengerPage: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          recipient_id: selectedContact.id,
-          message: newMessage,
+          recipientId: selectedContact.participants.data[0].id,
+          messageText: newMessage,
         }),
       });
-
+  
       if (response.ok) {
         setMessages(messages.map((msg) =>
           msg.id === newChatMessage.id ? { ...msg, status: "sent" } : msg
@@ -93,7 +94,7 @@ const MessengerPage: React.FC = () => {
     } catch (error) {
       console.error("Error sending message:", error);
     }
-
+  
     setNewMessage("");
   };
 
