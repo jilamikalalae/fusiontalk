@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const ACCESS_TOKEN = process.env.VERIFY_TOKEN;
+const ACCESS_TOKEN = process.env.VERIFY_TOKEN;
 
 // API FOR VERIFY WEBHOOK API
 export async function GET(req: NextRequest) {
