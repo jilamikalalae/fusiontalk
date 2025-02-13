@@ -122,7 +122,7 @@ export async function getMessengerMessages(userId = null) {
     } : {};
     
     return await MessengerMessage.find(query)
-      .sort({ timestamp: -1 })
+      .sort({ timestamp: 1 })
       .lean();
   } catch (error) {
     console.error('Error fetching Messenger messages:', error);
