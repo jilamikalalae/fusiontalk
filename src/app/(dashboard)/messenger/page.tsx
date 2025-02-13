@@ -8,70 +8,106 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { inboxMessages, type Message, type ChatMessage } from "@/lib/store/messages";
 
 interface Participant {
-  id: string;
-  name: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  profilePic: string;
+}
+
+interface Message {
+  _id: string;
+  senderId: string;
+  recipientId: string;
+  senderName: string;
+  content: string;
+  messageType: 'user' | 'page';
+  timestamp: string;
+  isRead: boolean;
 }
 
 interface Contact {
-  id: string;
-  participants: {
-    data: Participant[];
-  };
-  messages: {
-    data: ChatMessage[];
-  };
+  _id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  profilePic: string;
+  lastInteraction: string;
 }
 
 const MessengerPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Fetch contacts
   useEffect(() => {
-    const fetchConversations = async () => {
+    const fetchContacts = async () => {
       try {
-        const response = await fetch("/api/meta");
+        const response = await fetch("/api/meta/contacts");
         const data = await response.json();
-        setContacts(data.data || []);
+        setContacts(data || []);
       } catch (error) {
-        console.error("Error fetching conversations:", error);
+        console.error("Error fetching contacts:", error);
       }
     };
 
-    fetchConversations();
+    fetchContacts();
   }, []);
 
+  // Fetch messages when a contact is selected
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedContact) return;
+      
+      try {
+        const response = await fetch(`/api/meta/messages?userId=${selectedContact.userId}`);
+        const data = await response.json();
+        setMessages(data || []);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchMessages();
+
+    // Set up polling for new messages
+    const intervalId = setInterval(fetchMessages, 5000);
+    return () => clearInterval(intervalId);
+  }, [selectedContact]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleContactClick = (contact: Contact) => {
     setSelectedContact(contact);
-    setMessages(contact.messages.data || []);
   };
-  
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
-  
-    const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  
-    const newChatMessage: ChatMessage = {
-      id: messages.length + 1,
-      sender: "user",
-      text: newMessage,
-      time: currentTime,
-      status: "sending",
+
+    // Create temporary message for immediate display
+    const tempMessage: Message = {
+      _id: `temp-${Date.now()}`,
+      senderId: 'page',
+      recipientId: selectedContact.userId,
+      senderName: 'Page',
+      content: newMessage,
+      messageType: 'page',
+      timestamp: new Date().toISOString(),
+      isRead: false,
     };
-  
-    setMessages([...messages, newChatMessage]);
-  
+
+    // Optimistically add message to UI
+    setMessages(prev => [...prev, tempMessage]);
+    setNewMessage("");
+
     try {
       const response = await fetch("/api/meta", {
         method: "POST",
@@ -79,27 +115,28 @@ const MessengerPage: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          recipientId: selectedContact.participants.data[0].id,
+          recipientId: selectedContact.userId,
           messageText: newMessage,
         }),
       });
-  
-      if (response.ok) {
-        setMessages(messages.map((msg) =>
-          msg.id === newChatMessage.id ? { ...msg, status: "sent" } : msg
-        ));
-      } else {
-        console.error("Failed to send message");
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
       }
+
+      // Fetch updated messages
+      const messagesResponse = await fetch(`/api/meta/messages?userId=${selectedContact.userId}`);
+      const updatedMessages = await messagesResponse.json();
+      setMessages(updatedMessages);
     } catch (error) {
       console.error("Error sending message:", error);
+      // Optionally remove the temporary message if send failed
+      setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
     }
-  
-    setNewMessage("");
   };
 
   const filteredContacts = contacts.filter((contact) =>
-    contact.participants.data[0].name.toLowerCase().includes(searchQuery.toLowerCase())
+    `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -123,17 +160,21 @@ const MessengerPage: React.FC = () => {
             <ul className="space-y-3">
               {filteredContacts.map((contact) => (
                 <li
-                  key={contact.id}
+                  key={contact._id}
                   className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer"
                   onClick={() => handleContactClick(contact)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">MSG</span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden">
+                      <img 
+                        src={contact.profilePic} 
+                        alt={`${contact.firstName}'s profile`}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div>
-                      <p className="font-medium">{contact.participants.data[0].name}</p>
-                      <p className="text-sm text-gray-500">ID: {contact.participants.data[0].id}</p>
+                      <p className="font-medium">{`${contact.firstName} ${contact.lastName}`}</p>
+                      <p className="text-sm text-gray-500">Last active: {new Date(contact.lastInteraction).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </li>
@@ -147,11 +188,19 @@ const MessengerPage: React.FC = () => {
         <Card className="h-full">
           {selectedContact ? (
             <CardContent className="flex flex-col h-full justify-between">
-              <div className="flex-1 overflow-y-auto space-y-4">
+              <div className="flex-1 overflow-y-auto space-y-4 p-4">
                 {messages.map((msg) => (
-                  <div key={msg.id} className="flex justify-start">
-                    <div className="max-w-sm p-3 rounded-lg bg-gray-200">
-                      <p>{msg.message}</p>
+                  <div 
+                    key={msg._id} 
+                    className={`flex ${msg.messageType === 'page' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-sm p-3 rounded-lg ${
+                      msg.messageType === 'page' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                    }`}>
+                      <p>{msg.content}</p>
+                      <span className="text-xs opacity-75">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </span>
                     </div>
                   </div>
                 ))}
