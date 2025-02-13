@@ -92,6 +92,8 @@ const MessengerPage: React.FC = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
 
+    const timestamp = new Date();
+    
     // Create temporary message for immediate display
     const tempMessage: Message = {
       _id: `temp-${Date.now()}`,
@@ -100,7 +102,7 @@ const MessengerPage: React.FC = () => {
       senderName: 'Page',
       content: newMessage,
       messageType: 'page',
-      timestamp: new Date().toISOString(),
+      timestamp: timestamp.toISOString(),
       isRead: false,
     };
 
@@ -109,7 +111,8 @@ const MessengerPage: React.FC = () => {
     setNewMessage("");
 
     try {
-      const response = await fetch("/api/meta", {
+      // Send message to Facebook
+      const fbResponse = await fetch("/api/meta", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,17 +123,41 @@ const MessengerPage: React.FC = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
+      if (!fbResponse.ok) {
+        throw new Error('Failed to send message to Facebook');
+      }
+
+      // Store message in MongoDB
+      const dbResponse = await fetch("/api/meta/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          senderId: 'page',
+          recipientId: selectedContact.userId,
+          senderName: 'Page',
+          messageType: 'page',
+          content: newMessage,
+          timestamp: timestamp,
+        }),
+      });
+
+      if (!dbResponse.ok) {
+        throw new Error('Failed to store message in database');
       }
 
       // Fetch updated messages
       const messagesResponse = await fetch(`/api/meta/messages?userId=${selectedContact.userId}`);
+      if (!messagesResponse.ok) {
+        throw new Error('Failed to fetch updated messages');
+      }
+      
       const updatedMessages = await messagesResponse.json();
       setMessages(updatedMessages);
     } catch (error) {
       console.error("Error sending message:", error);
-      // Optionally remove the temporary message if send failed
+      // Remove the temporary message if send failed
       setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
     }
   };
@@ -144,8 +171,8 @@ const MessengerPage: React.FC = () => {
       <div className="w-1/4 bg-white border-r">
         <Card>
           <CardHeader>
-            <CardTitle>Contacts</CardTitle>
-            <CardDescription>Select a contact to view messages</CardDescription>
+            <CardTitle>Inbox</CardTitle>
+            <CardDescription>Newest ↑</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4">

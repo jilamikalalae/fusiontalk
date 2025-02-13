@@ -77,10 +77,11 @@ export async function storeMessengerMessage(messageData) {
       messageType: messageData.messageType,
       content: messageData.content,
       messageId: messageData.messageId,
-      timestamp: messageData.timestamp,
+      timestamp: messageData.timestamp || new Date(),
       isRead: messageData.isRead || false,
     });
 
+    console.log('Storing message:', newMessage);
     return await newMessage.save();
   } catch (error) {
     console.error('Error storing Messenger message:', error);
@@ -110,10 +111,19 @@ export async function upsertMessengerContact(contactData) {
   }
 }
 
-export async function getMessengerMessages() {
+export async function getMessengerMessages(userId = null) {
   try {
     await connectMongoDB();
-    return await MessengerMessage.find().sort({ timestamp: -1 });
+    const query = userId ? {
+      $or: [
+        { senderId: userId },
+        { recipientId: userId }
+      ]
+    } : {};
+    
+    return await MessengerMessage.find(query)
+      .sort({ timestamp: -1 })
+      .lean();
   } catch (error) {
     console.error('Error fetching Messenger messages:', error);
     throw error;

@@ -1,14 +1,18 @@
 import mongoose from 'mongoose';
 
 const messengerMessageSchema = new mongoose.Schema({
-  senderId: String,
-  recipientId: String,
+  senderId: { type: String, required: true },
+  recipientId: { type: String, required: true },
   senderName: String,
-  messageType: String, // 'user' or 'page'
-  content: String,
+  messageType: { 
+    type: String, 
+    required: true,
+    enum: ['user', 'page']  // Only allow these two values
+  },
+  content: { type: String, required: true },
   messageId: String,
-  timestamp: Date,
-  isRead: Boolean,
+  timestamp: { type: Date, default: Date.now },
+  isRead: { type: Boolean, default: false }
 });
 
 export default mongoose.models.MessengerMessage || mongoose.model('MessengerMessage', messengerMessageSchema);
