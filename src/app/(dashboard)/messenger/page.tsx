@@ -224,6 +224,24 @@ const MessengerPage: React.FC = () => {
         <Card className="h-full">
           {selectedContact ? (
             <CardContent className="flex flex-col h-full justify-between">
+              {/* Profile Header */}
+              <div className="flex items-center p-4 border-b">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+                  {selectedContact.profilePic ? (
+                    <img 
+                      src={selectedContact.profilePic} 
+                      alt={`${selectedContact.firstName} ${selectedContact.lastName}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-xs">IMG</span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold truncate">{`${selectedContact.firstName} ${selectedContact.lastName}`}</h2>
+                </div>
+              </div>
+              {/* Messages */}
               <div className="flex-1 overflow-y-auto space-y-4 p-4">
                 {messages.map((msg) => (
                   <div 

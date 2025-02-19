@@ -122,13 +122,13 @@ export async function getMessengerMessages(userId = null) {
       ]
     } : {};
     
-    console.log('Messages query:', query); // For debugging
+    // console.log('Messages query:', query); // For debugging
     
     const messages = await MessengerMessage.find(query)
       .sort({ timestamp: 1 })
       .lean();
       
-    console.log('Found messages:', messages.length); // For debugging
+    // console.log('Found messages:', messages.length); // For debugging
     
     return messages;
   } catch (error) {
