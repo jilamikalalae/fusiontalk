@@ -116,14 +116,21 @@ export async function getMessengerMessages(userId = null) {
     await connectMongoDB();
     const query = userId ? {
       $or: [
-        { senderId: userId },
-        { recipientId: userId }
+        // Only get messages between the page and this specific user
+        { senderId: userId, recipientId: 'page' },
+        { senderId: 'page', recipientId: userId }
       ]
     } : {};
     
-    return await MessengerMessage.find(query)
+    console.log('Messages query:', query); // For debugging
+    
+    const messages = await MessengerMessage.find(query)
       .sort({ timestamp: 1 })
       .lean();
+      
+    console.log('Found messages:', messages.length); // For debugging
+    
+    return messages;
   } catch (error) {
     console.error('Error fetching Messenger messages:', error);
     throw error;

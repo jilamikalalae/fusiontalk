@@ -59,7 +59,7 @@ const MessengerPage: React.FC = () => {
     fetchContacts();
   }, []);
 
-  // Fetch messages when a contact is selected
+    // Fetch messages when a contact is selected
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedContact) return;
@@ -67,7 +67,15 @@ const MessengerPage: React.FC = () => {
       try {
         const response = await fetch(`/api/meta/messages?userId=${selectedContact.userId}`);
         const data = await response.json();
-        setMessages(data || []);
+
+        // Filter messages to show only those between the page and the selected contact
+        const filteredMessages = data.filter((msg: Message) =>
+          (msg.senderId === 'page' && msg.recipientId === selectedContact.userId) ||
+          (msg.senderId === selectedContact.userId && msg.recipientId === 'page') ||
+          (msg.senderId === selectedContact.userId && msg.recipientId === '521016351095792') // Ensure messages from the contact to the page are included
+        );
+
+        setMessages(filteredMessages || []);
       } catch (error) {
         console.error("Error fetching messages:", error);
       }
@@ -79,6 +87,7 @@ const MessengerPage: React.FC = () => {
     const intervalId = setInterval(fetchMessages, 5000);
     return () => clearInterval(intervalId);
   }, [selectedContact]);
+
 
   // Scroll to bottom when messages change
   useEffect(() => {
