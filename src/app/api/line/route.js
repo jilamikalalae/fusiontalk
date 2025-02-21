@@ -1,33 +1,18 @@
 import { NextResponse } from 'next/server';
 import { storeLineMessage, upsertLineContact } from '@/lib/db';
 import { connectMongoDB } from '@/lib/mongodb';
-import User from '@/models/user';
-import { DecryptString } from '@/lib/crypto';
 
 // Fetch user profile using LINE Messaging API
 async function getLineUserProfile(userId) {
   await connectMongoDB();
 
-
-  console.log(userId)
-
-  const user = await User.findById(userId);
-  // const LineSecretToken = DecryptString(user.lineToken.secretToken,user.lineToken.secretTokenIv)
-  const LineAccessToken = DecryptString(
-    user.lineToken.accessToken,
-    user.lineToken.accessTokenIv
-  );
-
-  console.log(LineAccessToken);
-
-
-  if (!LineAccessToken) {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
     throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
   }
 
   const response = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
     headers: {
-      Authorization: `Bearer ${LineAccessToken}`
+      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
     }
   });
 
@@ -46,7 +31,7 @@ async function pushMessageToUser(userId, message) {
   const LINE_API_URL = 'https://api.line.me/v2/bot/message/push';
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${LineAccessToken}`
+    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
   };
   const body = JSON.stringify({
     to: userId,
@@ -74,7 +59,7 @@ async function sendLineMessage(replyToken, message) {
   const LINE_API_URL = 'https://api.line.me/v2/bot/message/reply';
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${LineAccessToken}`
+    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
   };
   const body = JSON.stringify({
     replyToken,
@@ -118,31 +103,15 @@ export async function POST(req) {
       try {
         // Fetch user profile
         const userProfile = await getLineUserProfile(userId);
-        await upsertLineContact({
-          userId,
-          displayName: userProfile.displayName,
-          pictureUrl: userProfile.pictureUrl,
-          statusMessage: userProfile.statusMessage
-        });
-
-        // Store user message
-        await storeLineMessage({
-          userId: userId,
-          userName: userProfile.displayName,
-          content: message,
-          messageType: 'user',
-          createdAt: new Date().toISOString()
-        });
 
         // Push the message to the user
-        const botReply = `${message}`;
-        await pushMessageToUser(userId, botReply);
+        await pushMessageToUser(userId, message);
 
-        // Store the bot reply
+        // Store ONLY the bot message
         await storeLineMessage({
           userId: 'BOT',
           userName: 'Bot',
-          content: botReply,
+          content: message,
           messageType: 'bot',
           replyTo: userId,
           createdAt: new Date().toISOString()
@@ -190,20 +159,20 @@ export async function POST(req) {
           });
 
           // Generate and store bot reply
-          const botReply =
-            userMessage.toLowerCase().trim() === 'hello'
-              ? 'Hello! How can I assist you today?'
-              : `I received your message: "${userMessage}". How can I help you?`;
+          // const botReply =
+          //   userMessage.toLowerCase().trim() === 'hello'
+          //     ? 'Hello! How can I assist you today?'
+          //     : `${userMessage}`;
 
-          await storeLineMessage({
-            userId: 'BOT',
-            userName: 'Bot',
-            content: botReply,
-            messageType: 'bot',
-            replyTo: userId,
-            createdAt: new Date().toISOString()
-          });
-          await sendLineMessage(event.replyToken, botReply);
+          // await storeLineMessage({
+          //   userId: 'BOT',
+          //   userName: 'Bot',
+          //   content: botReply,
+          //   messageType: 'bot',
+          //   replyTo: userId,
+          //   createdAt: new Date().toISOString()
+          // });
+          // await sendLineMessage(event.replyToken, botReply);
         } catch (error) {
           console.error('Error processing event:', error);
         }
