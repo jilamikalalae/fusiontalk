@@ -103,17 +103,7 @@ const AccountManagementPage: React.FC = () => {
   return (
     <div>
       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
-        {/* Profile Picture */}
-        <div className="flex items-center space-x-6 mb-6">
-          <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-            <img
-              src="https://via.placeholder.com/150"
-              alt="Profile"
-              className="object-contain"
-            />
-          </div>
-
-          <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end">
             {!isEditing && (
               <button
                 onClick={handleEdit}
@@ -123,7 +113,6 @@ const AccountManagementPage: React.FC = () => {
               </button>
             )}
           </div>
-        </div>
 
         {/* Full Name */}
         <div>
