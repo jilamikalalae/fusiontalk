@@ -1,7 +1,7 @@
-import { access } from 'fs';
+import { IUser } from '@/domain/User';
 import mongoose, { Schema } from 'mongoose';
 
-const userSchema = new Schema(
+const userSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -21,8 +21,7 @@ const userSchema = new Schema(
       userId: { type: String, unique: true },
     }
   },
-  { timestamps: true },
-  { collection: 'users', db: 'fusionTalk' }
+  { timestamps: true, collection: 'users' }
 );
 
 const User = mongoose.models.User || mongoose.model('User', userSchema); // if User not create, will create/ if craete, will pass to User

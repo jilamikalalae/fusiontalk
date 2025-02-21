@@ -103,7 +103,6 @@ export async function POST(req) {
       try {
         // Fetch user profile
         const userProfile = await getLineUserProfile(userId);
-
         // Push the message to the user
         await pushMessageToUser(userId, message);
 

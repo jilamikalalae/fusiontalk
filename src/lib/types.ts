@@ -9,4 +9,5 @@ export interface Message {
   displayName?: string;
   messageType: 'user' | 'bot' | string;
   replyTo?: string;
+  platform?: 'line' | 'messenger';
 } 

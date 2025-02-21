@@ -9,39 +9,67 @@ import {
 } from "@/components/ui/card";
 import { Message } from "@/lib/types";
 
+// Add new interface for Line Contact
+interface LineContact {
+  userId: string;
+  displayName: string;
+  pictureUrl: string;
+  statusMessage: string;
+  lastMessage: string;
+  lastMessageAt: Date;
+}
+
 const LinePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedContact, setSelectedContact] = useState<Message | null>(null);
+  const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
+  const [contacts, setContacts] = useState<LineContact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
-  const [userId, setUserId] = useState('');
 
+  // Fetch contacts
   useEffect(() => {
-    const fetchMessages = async () => {
+    const fetchContacts = async () => {
       try {
-        const response = await fetch('/api/messages/line');
+        const response = await fetch('/api/contacts/line');
         const data = await response.json();
-        setMessages(Array.isArray(data) ? data : []);
+        setContacts(Array.isArray(data) ? data : []);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching messages:', error);
-        setMessages([]);
+        console.error('Error fetching contacts:', error);
+        setContacts([]);
         setLoading(false);
       }
     };
 
-    fetchMessages();
+    fetchContacts();
   }, []);
 
-  const filteredMessages = Array.isArray(messages) 
-    ? messages
-        .filter(message => 
-          message.messageType === 'user' && 
-          message.userName.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    : [];
+  // Fetch messages when a contact is selected
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedContact) return;
+      
+      try {
+        const response = await fetch('/api/messages/line');
+        const data = await response.json();
+        setMessages(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        setMessages([]);
+      }
+    };
+
+    fetchMessages();
+
+    const intervalId = setInterval(fetchMessages, 3000); // Poll every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [selectedContact]);
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSendMessage = async () => {
     if (!selectedContact || !inputMessage.trim()) {
@@ -51,7 +79,9 @@ const LinePage: React.FC = () => {
 
     const messageData = {
       message: inputMessage,
-      userId: selectedContact.userId
+      userId: selectedContact.userId,
+      messageType: 'bot',
+      replyTo: selectedContact.userId
     };
     
     console.log('Sending message data:', messageData);
@@ -84,15 +114,15 @@ const LinePage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-1/4 bg-white border-r">
-        <Card>
-          <CardHeader>
-            <CardTitle>Inbox</CardTitle>
+      <div className="w-full md:w-1/3 lg:w-1/4 bg-white border-r">
+        <Card className="h-full">
+          <CardHeader className="p-4">
+            <CardTitle className="text-xl">Inbox</CardTitle>
             <CardDescription>Newest ↑</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="mb-4">
               <input
                 type="search"
@@ -102,63 +132,77 @@ const LinePage: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <ul className="space-y-3">
-              {Array.from(new Set(filteredMessages.map(message => message.userId)))
-                .map(userId => {
-                  const userMessages = filteredMessages.filter(message => message.userId === userId);
-                  const latestMessage = userMessages[0];
-
-                  return (
-                    <li
-                      key={userId}
-                      className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer ${
-                        latestMessage.isUnread ? "font-bold" : ""
-                      }`}
-                      onClick={() => setSelectedContact(latestMessage)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-300 rounded-full" />
-                        <div>
-                          <p className="font-medium">{latestMessage.userName}</p>
-                          <p className="text-sm text-gray-500">{latestMessage.content}</p>
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-400">
-                        {new Date(latestMessage.createdAt).toLocaleString()}
-                      </p>
-                    </li>
-                  );
-                })}
+            <ul className="space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
+              {filteredContacts.map((contact) => (
+                <li
+                  key={contact.userId}
+                  className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer`}
+                  onClick={() => setSelectedContact(contact)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      {contact.pictureUrl ? (
+                        <img 
+                          src={contact.pictureUrl} 
+                          alt={contact.displayName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white text-xs">LINE</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{contact.displayName}</p>
+                      <p className="text-sm text-gray-500 truncate">{contact.lastMessage}</p>
+                    </div>
+                  </div>
+                  {contact.lastMessageAt && (
+                    <p className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                      {new Date(contact.lastMessageAt).toLocaleDateString()} {new Date(contact.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </li>
+              ))}
             </ul>
           </CardContent>
         </Card>
       </div>
 
       {/* Chat Area */}
-      <div className="w-3/4 p-6">
+      <div className="w-full md:w-2/3 lg:w-3/4 p-4">
         <Card className="h-full">
-          <CardContent className="flex flex-col h-full justify-between">
+          <CardContent className="flex flex-col h-[calc(100vh-2rem)]">
             {/* Chat Room Title with Contact Name */}
             {selectedContact && (
-              <div className="flex items-center mb-4">
-                <img
-                  src={selectedContact.pictureUrl}
-                  alt={`${selectedContact.displayName}'s profile`}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
-                <h2 className="text-xl font-bold">{selectedContact.displayName}</h2>
+              <div className="flex items-center p-4 border-b">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+                  {selectedContact.pictureUrl ? (
+                    <img 
+                      src={selectedContact.pictureUrl} 
+                      alt={selectedContact.displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-xs">LINE</span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold truncate">{selectedContact.displayName}</h2>
+                  {selectedContact.statusMessage && (
+                    <p className="text-sm text-gray-500 truncate">{selectedContact.statusMessage}</p>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto space-y-4 flex flex-col-reverse">
+            <div className="flex-1 overflow-y-auto space-y-4 p-4 flex flex-col-reverse">
               {selectedContact && messages.length > 0 ? (
                 messages
                   .filter(msg => {
-                    // Show messages between the selected contact and BOT
                     return (
-                      msg.userId === selectedContact.userId || 
-                      (msg.userId === 'BOT' && msg.replyTo === selectedContact.userId)
+                      (msg.messageType === 'user' && msg.userId === selectedContact.userId) || 
+                      (msg.messageType === 'bot' && msg.replyTo === selectedContact.userId)
                     );
                   })
                   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -166,39 +210,53 @@ const LinePage: React.FC = () => {
                     <div
                       key={msg.id}
                       className={`flex ${
-                        (msg.messageType === 'bot' || msg.userId === 'BOT') ? "justify-end" : "justify-start"
+                        msg.messageType === 'bot' ? "justify-end" : "justify-start"
                       }`}
                     >
                       <div
-                        className={`max-w-sm p-3 rounded-lg ${
-                          (msg.messageType === 'bot' || msg.userId === 'BOT') ? "bg-blue-500 text-white" : "bg-gray-200"
+                        className={`max-w-[75%] p-3 rounded-lg ${
+                          msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
                         }`}
                       >
-                        {msg.content}
+                        <span className="text-xs text-gray-400 block mb-1">
+                          {new Date(msg.createdAt).toLocaleDateString()} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <div className="break-words">
+                          {msg.content}
+                        </div>
                       </div>
                     </div>
                   ))
               ) : (
-                <div className="text-center text-gray-500">No messages yet</div>
+                <div className="text-center text-gray-500">
+                  {selectedContact ? "No messages yet" : "Select a contact to start chatting"}
+                </div>
               )}
             </div>
 
             {/* Input Box */}
-            <div className="flex items-center space-x-3 border-t p-3">
-              <input
-                type="text"
-                placeholder="Type"
-                className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-              />
-              <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-                onClick={handleSendMessage}
-              >
-                Send
-              </button>
-            </div>
+            {selectedContact && (
+              <div className="flex items-center space-x-3 border-t p-4">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  onClick={handleSendMessage}
+                >
+                  Send
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
