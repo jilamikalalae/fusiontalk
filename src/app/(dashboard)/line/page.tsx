@@ -62,13 +62,13 @@ const LinePage: React.FC = () => {
 
     fetchMessages();
 
-    const intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+    const intervalId = setInterval(fetchMessages, 3000); // Poll every 5 seconds
 
     return () => clearInterval(intervalId); // Cleanup on unmount
   }, [selectedContact]);
 
   const filteredContacts = contacts.filter(contact =>
-    contact.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+    contact.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSendMessage = async () => {
