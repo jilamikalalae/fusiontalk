@@ -68,7 +68,7 @@ const LinePage: React.FC = () => {
   }, [selectedContact]);
 
   const filteredContacts = contacts.filter(contact =>
-    contact.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+    contact.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSendMessage = async () => {
