@@ -15,7 +15,10 @@ async function getUserLineCredentials(userId) {
     if (!user.lineToken || !user.lineToken.userIdIv) continue;
 
     try {
-      const decryptedUserId = DecryptString(user.lineToken.userId, user.lineToken.userIdIv);
+      const decryptedUserId = DecryptString(
+        user.lineToken.userId,
+        user.lineToken.userIdIv
+      );
       if (decryptedUserId === userId) {
         foundUser = user;
         break;
@@ -36,7 +39,10 @@ async function getUserLineCredentials(userId) {
     throw new Error(`Missing Access Token or IV for user ${userId}`);
   }
 
-  const LineAccessToken = DecryptString(lineToken.accessToken, lineToken.accessTokenIv);
+  const LineAccessToken = DecryptString(
+    lineToken.accessToken,
+    lineToken.accessTokenIv
+  );
 
   return { LineAccessToken };
 }
@@ -51,7 +57,9 @@ async function getLineUserProfile(userId) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to get user profile: ${response.statusText} (${errorText})`);
+    throw new Error(
+      `Failed to get user profile: ${response.statusText} (${errorText})`
+    );
   }
 
   return await response.json();
@@ -67,7 +75,10 @@ async function pushMessageToUser(userId, message) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${LineAccessToken}`
     },
-    body: JSON.stringify({ to: userId, messages: [{ type: 'text', text: message }] })
+    body: JSON.stringify({
+      to: userId,
+      messages: [{ type: 'text', text: message }]
+    })
   });
 
   if (!response.ok) {
@@ -149,7 +160,10 @@ export async function POST(req) {
 
     // Validate Webhook Format
     if (!body.events || !Array.isArray(body.events)) {
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400, headers });
+      return NextResponse.json(
+        { error: 'Invalid webhook format' },
+        { status: 400, headers }
+      );
     }
 
     // Process LINE Webhook Events
@@ -175,8 +189,6 @@ export async function POST(req) {
             messageType: 'user',
             createdAt: new Date().toISOString()
           });
-
-      
         } catch (error) {
           console.error('Error processing event:', error);
         }

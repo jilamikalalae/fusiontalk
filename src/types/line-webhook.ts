@@ -29,3 +29,21 @@ export interface Source {
   type: string;
   userId: string;
 }
+
+export interface LineProfileResponse {
+  userId: string;
+  displayName: string;
+  pictureUrl: string;
+  language: string;
+  statusMessage: string;
+}
+
+export interface LineSendPushMessageRequest {
+  to: string;
+  messages: PushMessageContent[];
+}
+
+export interface PushMessageContent {
+  type: string;
+  text: string;
+}

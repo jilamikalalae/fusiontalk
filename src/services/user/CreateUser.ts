@@ -16,7 +16,8 @@ export class CreateUser {
         name: req.name,
         email: req.email,
         password: hashedPassword,
-        lineToken: null
+        lineToken: null,
+        messengerToken: null
       };
 
       this.userRepository.create(user);

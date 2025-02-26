@@ -50,6 +50,8 @@ const authOptions = {
       if (session?.user) {
         session.user.id = token.sub; // Attach user ID to the session
       }
+
+      
       return session;
     },
     // Customize the JWT object

@@ -4,6 +4,16 @@ import { IUserRepository } from './IUserRepository';
 import { IUser } from '@/domain/User';
 
 export class UserRepository implements IUserRepository {
+  async getUserByLineId(userId: string): Promise<IUser> {
+    try {
+      await connectMongoDB();
+
+      const user = await User.findOne({ 'lineToken.userId': userId });
+      return user;
+    } catch (e) {
+      throw new Error('failed to create user');
+    }
+  }
   async create(user: IUser): Promise<void> {
     try {
       await connectMongoDB();

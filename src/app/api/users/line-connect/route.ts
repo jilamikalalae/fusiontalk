@@ -8,9 +8,9 @@ import { EncryptString } from '@/lib/crypto';
 
 export async function POST(req: NextRequest) {
   try {
-    const { accessToken, secretToken, userId } = await req.json();
+    const { accessToken, secretToken } = await req.json();
 
-    if (!accessToken || !secretToken || !userId) {
+    if (!accessToken || !secretToken) {
       return NewResponse(400, null, 'All fields are required.');
     }
 
@@ -28,9 +28,21 @@ export async function POST(req: NextRequest) {
       return NewResponse(404, null, null);
     }
 
-    const encryptAccessToken = EncryptString(accessToken)
-    const encryptSecretToken = EncryptString(secretToken)
-    const encryptUserId = EncryptString(userId)
+    const encryptAccessToken = EncryptString(accessToken);
+    const encryptSecretToken = EncryptString(secretToken);
+
+    const botProfileResponse = await fetch(`https://api.line.me/v2/bot/info`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!botProfileResponse.ok) {
+      const errorText = await botProfileResponse.text();
+      throw new Error(
+        `Failed to get bot profile: ${botProfileResponse.statusText} (${errorText})`
+      );
+    }
+
+    const botProfile = await botProfileResponse.json();
 
     // Update user tokens
     let lineToken = {} as any;
@@ -38,8 +50,7 @@ export async function POST(req: NextRequest) {
     lineToken.accessTokenIv = encryptAccessToken.iv;
     lineToken.secretToken = encryptSecretToken.encrypted;
     lineToken.secretTokenIv = encryptSecretToken.iv;
-    lineToken.userId = encryptUserId.encrypted;
-    lineToken.userIdIv = encryptUserId.iv;
+    lineToken.userId = botProfile.userId;
     existingUser.lineToken = lineToken;
     // console.log(existingUser)
 
@@ -61,11 +72,15 @@ export async function PUT(req: NextRequest) {
 
     await connectMongoDB();
 
-    const user = await User.findByIdAndUpdate(id, { lineToken : null});
+    const user = await User.findByIdAndUpdate(id, { lineToken: null });
 
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error delete line token:', error);
-    return NewResponse(500,null,'Failed to delete line token Please try again later.' )
+    return NewResponse(
+      500,
+      null,
+      'Failed to delete line token Please try again later.'
+    );
   }
 }

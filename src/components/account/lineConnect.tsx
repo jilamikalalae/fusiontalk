@@ -29,7 +29,6 @@ export default function LineConnect({
   const [open, setOpen] = React.useState(false);
   const [accessToken, setAccessToken] = React.useState('');
   const [secretToken, setSecretToken] = React.useState('');
-  const [userId, setUserId] = React.useState('');
   const [error, setError] = React.useState('');
   const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
 
@@ -38,13 +37,12 @@ export default function LineConnect({
     setOpen(false);
     setAccessToken('');
     setSecretToken('');
-    setUserId('');
     setError('');
     setUnlinkConfirm(false);
   };
 
   const handleConnect = async () => {
-    if (!accessToken || !secretToken || !userId) {
+    if (!accessToken || !secretToken) {
       setError('All fields are required.');
       return;
     }
@@ -53,7 +51,7 @@ export default function LineConnect({
       const response = await fetch('/api/users/line-connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, secretToken, userId })
+        body: JSON.stringify({ accessToken, secretToken })
       });
 
       if (!response.ok) {
@@ -124,14 +122,6 @@ export default function LineConnect({
                 margin="normal"
                 value={secretToken}
                 onChange={(e) => setSecretToken(e.target.value)}
-              />
-              <TextField
-                fullWidth
-                label="User Id"
-                variant="outlined"
-                margin="normal"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
               />
               {error && <Typography color="error">{error}</Typography>}
               <Button
