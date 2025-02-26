@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { storeLineMessage, upsertLineContact } from '@/lib/db';
+// import { storeLineMessage, upsertLineContact } from '@/lib/db';
 import { connectMongoDB } from '@/lib/mongodb';
 import User from '@/models/user';
 import { DecryptString } from '@/lib/crypto';
@@ -52,7 +52,9 @@ async function getLineUserProfile(userId) {
   const { LineAccessToken } = await getUserLineCredentials(userId);
 
   const response = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
-    headers: { Authorization: `Bearer ${LineAccessToken}` }
+    headers: {
+      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+    }
   });
 
   if (!response.ok) {
@@ -67,18 +69,22 @@ async function getLineUserProfile(userId) {
 
 // 🛠 Send Message to User
 async function pushMessageToUser(userId, message) {
-  const { LineAccessToken } = await getUserLineCredentials(userId);
+  const LINE_API_URL = 'https://api.line.me/v2/bot/message/push';
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+  };
+  const body = JSON.stringify({
+    to: userId,
+    messages: Array.isArray(message)
+      ? message
+      : [{ type: 'text', text: message }]
+  });
 
   const response = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${LineAccessToken}`
-    },
-    body: JSON.stringify({
-      to: userId,
-      messages: [{ type: 'text', text: message }]
-    })
+    headers,
+    body
   });
 
   if (!response.ok) {
@@ -89,17 +95,22 @@ async function pushMessageToUser(userId, message) {
   return response.json();
 }
 
-// 🛠 Reply to a Message
-async function sendLineMessage(replyToken, message, userId) {
-  const { LineAccessToken } = await getUserLineCredentials(userId);
+// Reply to a message using replyToken
+async function sendLineMessage(replyToken, message) {
+  const LINE_API_URL = 'https://api.line.me/v2/bot/message/reply';
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+  };
+  const body = JSON.stringify({
+    replyToken,
+    messages: [{ type: 'text', text: message }]
+  });
 
   const response = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${LineAccessToken}`
-    },
-    body: JSON.stringify({ replyToken, messages: [{ type: 'text', text: message }] })
+    headers,
+    body
   });
 
   if (!response.ok) {
@@ -135,7 +146,7 @@ export async function POST(req) {
       try {
         const userProfile = await getLineUserProfile(userId);
 
-        // Push message
+        // Push the message to the user
         await pushMessageToUser(userId, message);
 
         // Store bot reply
@@ -189,6 +200,22 @@ export async function POST(req) {
             messageType: 'user',
             createdAt: new Date().toISOString()
           });
+
+          // Generate and store bot reply
+          // const botReply =
+          //   userMessage.toLowerCase().trim() === 'hello'
+          //     ? 'Hello! How can I assist you today?'
+          //     : `${userMessage}`;
+
+          // await storeLineMessage({
+          //   userId: 'BOT',
+          //   userName: 'Bot',
+          //   content: botReply,
+          //   messageType: 'bot',
+          //   replyTo: userId,
+          //   createdAt: new Date().toISOString()
+          // });
+          // await sendLineMessage(event.replyToken, botReply);
         } catch (error) {
           console.error('Error processing event:', error);
         }

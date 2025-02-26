@@ -3,8 +3,10 @@ import { NextRequest } from 'next/server';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { lineId: string } }
+  { params }: { params: Promise<{ lineId: string }> }
 ) {
-  const response = await LineController.getLineMessage(req, params.lineId);
+  const { lineId } = await params;
+
+  const response = await LineController.getLineMessage(req, lineId);
   return response;
 }
