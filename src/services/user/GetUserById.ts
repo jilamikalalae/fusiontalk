@@ -13,7 +13,12 @@ export class GetUserById {
       let isLineConnected = false;
       let isMessengerConnected = false;
 
-      if (user.lineToken) {
+      if (
+        user.lineToken &&
+        user.lineToken.accessToken &&
+        user.lineToken.accessTokenIv &&
+        user.lineToken.userId
+      ) {
         isLineConnected = true;
       }
 

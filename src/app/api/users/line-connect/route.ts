@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectMongoDB } from '@/lib/mongodb';
 import User from '@/models/user';
-import bcrypt from 'bcryptjs';
 import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
 import { NewResponse } from '@/types/api-response';
+import { EncryptString } from '@/lib/crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,20 +28,37 @@ export async function POST(req: NextRequest) {
       return NewResponse(404, null, null);
     }
 
-    const hashedAccessToken = await bcrypt.hash(accessToken, 10);
-    const hashedSecretToken = await bcrypt.hash(secretToken, 10);
+    const encryptAccessToken = EncryptString(accessToken);
+    const encryptSecretToken = EncryptString(secretToken);
+
+    const botProfileResponse = await fetch(`https://api.line.me/v2/bot/info`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!botProfileResponse.ok) {
+      const errorText = await botProfileResponse.text();
+      throw new Error(
+        `Failed to get bot profile: ${botProfileResponse.statusText} (${errorText})`
+      );
+    }
+
+    const botProfile = await botProfileResponse.json();
 
     // Update user tokens
     let lineToken = {} as any;
-    lineToken.accessToken = hashedAccessToken;
-    lineToken.secretToken = hashedSecretToken;
+    lineToken.accessToken = encryptAccessToken.encrypted;
+    lineToken.accessTokenIv = encryptAccessToken.iv;
+    lineToken.secretToken = encryptSecretToken.encrypted;
+    lineToken.secretTokenIv = encryptSecretToken.iv;
+    lineToken.userId = botProfile.userId;
     existingUser.lineToken = lineToken;
-    await existingUser.save();
+    // console.log(existingUser)
 
+    await existingUser.save();
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error connecting Line account:', error);
-    return NewResponse(200, null, null);
+    return NewResponse(500, null, null);
   }
 }
 
@@ -55,11 +72,15 @@ export async function PUT(req: NextRequest) {
 
     await connectMongoDB();
 
-    const user = await User.findByIdAndUpdate(id, { lineToken : null});
+    const user = await User.findByIdAndUpdate(id, { lineToken: null });
 
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error delete line token:', error);
-    return NewResponse(500,null,'Failed to delete line token Please try again later.' )
+    return NewResponse(
+      500,
+      null,
+      'Failed to delete line token Please try again later.'
+    );
   }
 }

@@ -8,6 +8,7 @@ import NewPassword from '@/components/account/newPassword';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import LineConnect from '@/components/account/lineConnect';
+import MessengerConnect from '@/components/account/messengerConnect';
 
 const AccountManagementPage: React.FC = () => {
   const { data: session } = useSession();
@@ -102,17 +103,7 @@ const AccountManagementPage: React.FC = () => {
   return (
     <div>
       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
-        {/* Profile Picture */}
-        <div className="flex items-center space-x-6 mb-6">
-          <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-            <img
-              src="https://via.placeholder.com/150"
-              alt="Profile"
-              className="object-contain"
-            />
-          </div>
-
-          <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end">
             {!isEditing && (
               <button
                 onClick={handleEdit}
@@ -122,7 +113,6 @@ const AccountManagementPage: React.FC = () => {
               </button>
             )}
           </div>
-        </div>
 
         {/* Full Name */}
         <div>
@@ -217,17 +207,17 @@ const AccountManagementPage: React.FC = () => {
                 Connect your Messenger account.
               </p>
             </div>
-            <LineConnect
+            <MessengerConnect
               className={`px-4 py-2 rounded-lg border-2 ${
                 userProfile.isMessengerConnected
-                  ? 'border-green-500 text-green-500 bg-white'
+                  ? 'border-red-500 text-red-500 bg-white'
                   : 'border-gray-300 text-gray-700 bg-white'
               }`}
               onConnectionChange={handleConnectionMessenger}
-              isConnected={userProfile.isLineConnected}
+              isConnected={userProfile.isMessengerConnected}
             >
               {userProfile.isMessengerConnected ? 'Unlink' : 'Link'}
-            </LineConnect>
+            </MessengerConnect>
           </li>
         </ul>
       </div>

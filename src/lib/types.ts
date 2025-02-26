@@ -1,4 +1,7 @@
 export interface Message {
+  _id: {
+    $oid: string;
+  };
   id: string;
   userId: string;
   userName: string;
@@ -10,4 +13,4 @@ export interface Message {
   messageType: 'user' | 'bot' | string;
   replyTo?: string;
   platform?: 'line' | 'messenger';
-} 
+}

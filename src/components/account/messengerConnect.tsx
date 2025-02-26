@@ -13,45 +13,72 @@ const style = {
   borderRadius: 4
 };
 
-interface LineConnectProps {
+interface MessengerConnectProps {
   className?: string;
   children?: React.ReactNode;
   onConnectionChange?: (connected: boolean) => void;
   isConnected?: boolean;
 }
 
-export default function LineConnect({
+export default function MessengerConnect({
   className,
   children,
   onConnectionChange,
   isConnected
-}: LineConnectProps) {
+}: MessengerConnectProps) {
   const [open, setOpen] = React.useState(false);
   const [accessToken, setAccessToken] = React.useState('');
-  const [secretToken, setSecretToken] = React.useState('');
+  const [userId, setUserId] = React.useState('');
   const [error, setError] = React.useState('');
   const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
+  const [connectionTime, setConnectionTime] = React.useState<number | null>(null);
 
-  const handleOpen = () => setOpen(true);
+  React.useEffect(() => {
+    // Check if there is a saved connection time
+    const savedTime = localStorage.getItem('messengerConnectionTime');
+    if (savedTime) {
+      setConnectionTime(Number(savedTime));
+      checkTokenExpiration(Number(savedTime));
+    }
+  }, []);
+
+  const checkTokenExpiration = (time: number) => {
+    const now = Date.now();
+    const elapsedTime = now - time;
+    const hoursPassed = elapsedTime / (1000 * 60 * 60); // Convert ms to hours
+
+    if (hoursPassed >= 24) {
+      setError('Access token has expired. Please type again.');
+      handleUnlink(); // Automatically unlink if expired
+    }
+  };
+
+  const handleOpen = () => {
+    setOpen(true);
+    if (connectionTime) {
+      checkTokenExpiration(connectionTime);
+    }
+  };
+
   const handleClose = () => {
     setOpen(false);
     setAccessToken('');
-    setSecretToken('');
+    setUserId('');
     setError('');
     setUnlinkConfirm(false);
   };
 
   const handleConnect = async () => {
-    if (!accessToken || !secretToken) {
-      setError('All fields are required.');
+    if (!accessToken || !userId) {
+      setError('Both fields are required.');
       return;
     }
 
     try {
-      const response = await fetch('/api/users/line-connect', {
+      const response = await fetch('/api/users/messenger-connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, secretToken })
+        body: JSON.stringify({ accessToken, userId })
       });
 
       if (!response.ok) {
@@ -59,6 +86,10 @@ export default function LineConnect({
         setError(data.message || 'Connection failed.');
         return;
       }
+
+      // Save connection timestamp
+      localStorage.setItem('messengerConnectionTime', Date.now().toString());
+      setConnectionTime(Date.now());
 
       if (onConnectionChange) {
         onConnectionChange(true);
@@ -71,7 +102,7 @@ export default function LineConnect({
 
   const handleUnlink = async () => {
     try {
-      const response = await fetch('/api/users/line-connect', {
+      const response = await fetch('/api/users/messenger-connect', {
         method: 'PUT'
       });
 
@@ -81,6 +112,10 @@ export default function LineConnect({
         return;
       }
 
+      // Remove saved connection time
+      localStorage.removeItem('messengerConnectionTime');
+      setConnectionTime(null);
+
       if (onConnectionChange) {
         onConnectionChange(false);
       }
@@ -89,8 +124,6 @@ export default function LineConnect({
       setError('An error occurred. Please try again.');
     }
   };
-
-  const openUnlinkConfirm = () => setUnlinkConfirm(true);
 
   return (
     <div>
@@ -105,8 +138,12 @@ export default function LineConnect({
           {!isConnected ? (
             <>
               <Typography variant="h6" component="h2" mb={2}>
-                Connect Line Official Account
+                Connect Messenger Account
               </Typography>
+              <Button variant="outlined" href="https://developers.facebook.com/tools/explorer/" target="_blank">
+                Generate Access Token
+              </Button>
+
               <TextField
                 fullWidth
                 label="Access Token"
@@ -115,14 +152,16 @@ export default function LineConnect({
                 value={accessToken}
                 onChange={(e) => setAccessToken(e.target.value)}
               />
+
               <TextField
                 fullWidth
-                label="Secret Token"
+                label="User Id"
                 variant="outlined"
                 margin="normal"
-                value={secretToken}
-                onChange={(e) => setSecretToken(e.target.value)}
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
               />
+
               {error && <Typography color="error">{error}</Typography>}
               <Button
                 onClick={handleConnect}
@@ -136,10 +175,10 @@ export default function LineConnect({
           ) : (
             <>
               <Typography variant="h6" component="h2" mb={2}>
-                Unlink Line Official Account
+                Unlink Messenger Account
               </Typography>
               <Typography mb={3}>
-                Are you sure you want to unlink your Line account?
+                Are you sure you want to unlink your Messenger account?
               </Typography>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button

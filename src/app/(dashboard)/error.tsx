@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function Error({
   error,
@@ -15,31 +16,30 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="p-4 md:p-6">
-      <div className="mb-8 space-y-4">
-        <h1 className="font-semibold text-lg md:text-2xl">
-          Please complete setup
-        </h1>
-        <p>
-          Inside the Vercel Postgres dashboard, create a table based on the
-          schema defined in this repository.
-        </p>
-        <pre className="my-4 px-3 py-4 bg-black text-white rounded-lg max-w-2xl overflow-scroll flex text-wrap">
-          <code>
-            {`CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  name VARCHAR(255),
-  username VARCHAR(255)
-);`}
-          </code>
-        </pre>
-        <p>Insert a row for testing:</p>
-        <pre className="my-4 px-3 py-4 bg-black text-white rounded-lg max-w-2xl overflow-scroll flex text-wrap">
-          <code>
-            {`INSERT INTO users (id, email, name, username) VALUES (1, 'me@site.com', 'Me', 'username');`}
-          </code>
-        </pre>
+    <main className="min-h-screen flex items-center justify-center p-4 md:p-6">
+      <div className="text-center space-y-6 max-w-lg">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Something went wrong!
+          </h1>
+          <p className="text-muted-foreground">
+            We apologize for the inconvenience. An unexpected error has occurred.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <Button
+            onClick={reset}
+            variant="default"
+            className="px-8"
+          >
+            Try again
+          </Button>
+          
+          <p className="text-sm text-muted-foreground">
+            If the problem persists, please contact support or try again later.
+          </p>
+        </div>
       </div>
     </main>
   );

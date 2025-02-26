@@ -7,8 +7,16 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     lineToken: {
+      accessTokenIv: { type: String },
       accessToken: { type: String, unique: true },
-      secretToken: { type: String, unique: true }
+      secretTokenIv: { type: String },
+      secretToken: { type: String, unique: true },
+      userId: { type: String, unique: true }
+    },
+    messengerToken: {
+      accessTokenIv: { type: String },
+      accessToken: { type: String, unique: true },
+      userId: { type: String, unique: true }
     }
   },
   { timestamps: true, collection: 'users' }

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import bg1 from '@/app/login/bg1.webp';
 import React, { FormEvent, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 
 export default function RegisterPage() {
@@ -33,7 +33,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch('/api/register/v2', {
+      const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -42,11 +42,21 @@ export default function RegisterPage() {
       const response = await res.json();
       if (res.ok) {
         setError('');
-        setName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setSuccess('User registered successfully!');
+        // Attempt to sign in immediately after successful registration
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false
+        });
+
+        if (result?.error) {
+          setError(
+            'Login failed after registration. Please try logging in manually.'
+          );
+        } else {
+          // Successful login will trigger the session check and redirect
+          setSuccess('Registration successful! Logging you in...');
+        }
       } else {
         setError(response.message || 'Registration failed.');
       }
