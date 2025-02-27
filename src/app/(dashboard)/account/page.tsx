@@ -82,159 +82,190 @@ const AccountManagementPage: React.FC = () => {
         name: editedProfile.name,
         email: editedProfile.email
       }));
+
       setIsEditing(false);
     } catch (error) {
       console.error(error);
     }
   };
 
+  const handleConnectionLine = (isConnected: boolean) => {
+    setUserProfile((prev) => ({
+      ...prev,
+      isLineConnected: isConnected
+    }));
+  };
+
+  const handleConnectionMessenger = (isConnected: boolean) => {
+    setUserProfile((prev) => ({
+      ...prev,
+      isMessengerConnected: isConnected
+    }));
+  };
+
   if (loading) {
-    return <LinearProgress />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <LinearProgress className="w-full max-w-md" />
+      </div>
+    );
   }
 
-  const handleConnectionLine = (connected: boolean) => {
-    setUserProfile((prev) => ({ ...prev, isLineConnected: connected }));
-  };
-
-  const handleConnectionMessenger = (connected: boolean) => {
-    setUserProfile((prev) => ({ ...prev, isMessengerConnected: connected }));
-  };
-
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6">
-        <div className="flex-1 flex justify-end">
-          {!isEditing && (
-            <button
-              onClick={handleEdit}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 border-2 border-red-500 text-red-500 bg-white rounded-lg text-sm sm:text-base"
-            >
-              Edit
-            </button>
-          )}
-        </div>
+    <div className="min-h-screen bg-gray-50 w-full">
+      <div className="container mx-auto px-4 py-8">
+      
 
-        {/* Full Name */}
-        <div>
-          <p className="font-semibold text-base sm:text-lg">Name</p>
-          <input
-            type="text"
-            value={isEditing ? editedProfile.name : userProfile.name}
-            onChange={(e) =>
-              setEditedProfile((prev) => ({ ...prev, name: e.target.value }))
-            }
-            readOnly={!isEditing}
-            placeholder="Name"
-            className={`mt-2 w-full p-2 sm:p-3 border rounded-lg outline-none ${
-              isEditing ? 'focus:ring-2 focus:ring-blue-500' : ''
-            }`}
-          />
-        </div>
-
-        {/* Contact Email */}
-        <div>
-          <p className="font-semibold text-base sm:text-lg">Contact email</p>
-          <input
-            type="email"
-            value={isEditing ? editedProfile.email : userProfile.email}
-            onChange={(e) =>
-              setEditedProfile((prev) => ({ ...prev, email: e.target.value }))
-            }
-            readOnly={!isEditing}
-            placeholder="Email address"
-            className={`mt-2 w-full p-2 sm:p-3 border rounded-lg outline-none ${
-              isEditing ? 'focus:ring-2 focus:ring-blue-500' : ''
-            }`}
-          />
-        </div>
-
-        {/* Save and Cancel Buttons */}
-        {isEditing && (
-          <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg w-full sm:w-auto"
-            >
-              Save
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 bg-gray-200 text-black rounded-lg w-full sm:w-auto"
-            >
-              Cancel
-            </button>
+        {/* Profile Information */}
+        <div className="bg-white shadow rounded-lg w-full mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold">Profile Information</h2>
           </div>
-        )}
-      </div>
-
-      {/* Password */}
-      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6 mt-6 sm:mt-10">
-        <p className="font-semibold text-base sm:text-lg">Password</p>
-        <div className="relative">
-          <NewPassword />
+          <div className="p-6">
+            {!isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500">Name</p>
+                  <p className="font-medium">{userProfile.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{userProfile.email}</p>
+                </div>
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                >
+                  Edit Profile
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm text-gray-500">
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={editedProfile.name}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, name: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-lg mt-1"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm text-gray-500">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={editedProfile.email}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, email: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-lg mt-1"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-sm sm:text-base"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Integrated Accounts */}
-      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6 mt-6 sm:mt-10">
-        <p className="font-semibold text-base sm:text-lg">Integrated accounts</p>
-        <ul className="mt-4 space-y-4">
-          <li className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 p-4 rounded-lg shadow">
-            <div className="mb-3 sm:mb-0">
-              <p className="font-medium">Line</p>
-              <p className="text-sm text-gray-500">
-                Connect your Line account.
-              </p>
-            </div>
-            <LineConnect
-              className={`px-4 py-2 rounded-lg border-2 text-center ${
-                userProfile.isLineConnected
-                  ? 'border-red-500 text-red-500 bg-white'
-                  : 'border-gray-300 text-gray-700 bg-white'
-              }`}
-              onConnectionChange={handleConnectionLine}
-              isConnected={userProfile.isLineConnected}
-            >
-              {userProfile.isLineConnected ? 'Unlink' : 'Link'}
-            </LineConnect>
-          </li>
-        </ul>
-        <ul className="mt-4 space-y-4">
-          <li className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 p-4 rounded-lg shadow">
-            <div className="mb-3 sm:mb-0">
-              <p className="font-medium">Messenger</p>
-              <p className="text-sm text-gray-500">
-                Connect your Messenger account.
-              </p>
-            </div>
-            <MessengerConnect
-              className={`px-4 py-2 rounded-lg border-2 text-center ${
-                userProfile.isMessengerConnected
-                  ? 'border-red-500 text-red-500 bg-white'
-                  : 'border-gray-300 text-gray-700 bg-white'
-              }`}
-              onConnectionChange={handleConnectionMessenger}
-              isConnected={userProfile.isMessengerConnected}
-            >
-              {userProfile.isMessengerConnected ? 'Unlink' : 'Link'}
-            </MessengerConnect>
-          </li>
-        </ul>
-      </div>
+        {/* Password */}
+        <div className="bg-white shadow rounded-lg w-full mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold">Password</h2>
+          </div>
+          <div className="p-6">
+            <NewPassword />
+          </div>
+        </div>
 
-      {/* Account Security */}
-      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6 mt-6 sm:mt-10">
-        <p className="font-semibold text-base sm:text-lg">Account Security</p>
-        <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-          <button
-            onClick={() => signOut()}
-            className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg w-full sm:w-auto"
-          >
-            Log out
-          </button>
-          <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg w-full sm:w-auto">
-            Delete my account
-          </button>
+        {/* Integrated Accounts */}
+        <div className="bg-white shadow rounded-lg w-full mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold">Integrated Accounts</h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-4 sm:mb-0">
+                  <h3 className="font-medium text-lg">Line</h3>
+                  <p className="text-sm text-gray-500">Connect your Line account to chat with your Line contacts.</p>
+                </div>
+                <LineConnect
+                  className={`px-4 py-2 rounded-lg border-2 text-center ${
+                    userProfile.isLineConnected
+                      ? 'border-red-500 text-red-500 bg-white'
+                      : 'border-gray-300 text-gray-700 bg-white'
+                  }`}
+                  onConnectionChange={handleConnectionLine}
+                  isConnected={userProfile.isLineConnected}
+                >
+                  {userProfile.isLineConnected ? 'Unlink' : 'Link'}
+                </LineConnect>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-4 sm:mb-0">
+                  <h3 className="font-medium text-lg">Messenger</h3>
+                  <p className="text-sm text-gray-500">Connect your Messenger account to chat with your Facebook friends.</p>
+                </div>
+                <MessengerConnect
+                  className={`px-4 py-2 rounded-lg border-2 text-center ${
+                    userProfile.isMessengerConnected
+                      ? 'border-red-500 text-red-500 bg-white'
+                      : 'border-gray-300 text-gray-700 bg-white'
+                  }`}
+                  onConnectionChange={handleConnectionMessenger}
+                  isConnected={userProfile.isMessengerConnected}
+                >
+                  {userProfile.isMessengerConnected ? 'Unlink' : 'Link'}
+                </MessengerConnect>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Security */}
+        <div className="bg-white shadow rounded-lg w-full">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold">Account Security</h2>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => signOut()}
+                className="px-6 py-3 border border-gray-300 bg-white text-gray-800 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto text-center"
+              >
+                Log out
+              </button>
+              <button 
+                className="px-6 py-3 border border-red-500 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-auto text-center"
+              >
+                Delete my account
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
