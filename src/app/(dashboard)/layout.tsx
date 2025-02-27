@@ -48,10 +48,6 @@ function DesktopNav() {
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
   
 
-        <NavItem href="/notification" label="Notification">
-          <Bell className="h-5 w-5" />
-        </NavItem>
-
         <NavItem href="/line" label="Line">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" className="h-5 w-5" />
         </NavItem>
@@ -81,64 +77,5 @@ function DesktopNav() {
         </Tooltip>
       </nav> */}
     </aside>
-  );
-}
-
-function MobileNav() {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button size="icon" variant="outline" className="sm:hidden">
-          <PanelLeft className="h-5 w-5" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="sm:max-w-xs">
-        <nav className="grid gap-6 text-lg font-medium">
-          <Link
-            href="#"
-            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-          >
-            <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-            <span className="sr-only">Vercel</span>
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-          >
-        <Bell className="h-5 w-5" />
-            Notification
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-          >
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" className="h-5 w-5" />
-            Orders
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-foreground"
-          >
-            <Package className="h-5 w-5" />
-            Products
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <Users2 className="h-5 w-5" />
-            Customers
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <LineChart className="h-5 w-5" />
-            Settings
-          </Link>
-        </nav>
-      </SheetContent>
-    </Sheet>
   );
 }
