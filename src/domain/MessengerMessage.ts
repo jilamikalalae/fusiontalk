@@ -4,7 +4,7 @@ export interface IMessengerMessage {
   senderId: string;
   recipientId: string;
   senderName: string;
-  messageType: MessageType;
+  messageType: string;
   content: string;
   messageId: string;
   timestamp: Date;

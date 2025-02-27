@@ -8,8 +8,8 @@ const messengerMessageSchema = new Schema<IMessengerMessage>({
   senderName: String,
   messageType: {
     type: String,
-    enum: Object.values(MessageType),
-    required: true
+    required: true,
+    enum: ['user', 'page']
   },
   content: { type: String, required: true },
   messageId: String,
