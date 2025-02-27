@@ -164,7 +164,6 @@ const LinePage: React.FC = () => {
         title="Line Connection Required"
         message="Please connect your LINE account to access the chat features. Would you like to go to the account settings page?"
         confirmText="Go to Settings"
-        onClose={() => setIsModalOpen(false)}
         onConfirm={handleModalConfirm}
       />
       {loading ? (

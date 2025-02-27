@@ -4,37 +4,42 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
 
   const { data: session } = useSession();
 
-  if (session) router.replace("/");
+  if (session) router.replace('/');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      setIsLoading(true);
       const res = await signIn('credentials', {
         email,
         password,
-        redirect: false, // Prevent automatic redirection
+        redirect: false // Prevent automatic redirection
       });
 
       if (res.error) {
-        setError('Invalid credentials'); // Show error message
+        setError('Your email or password is incorrect.'); // Show error message
       } else {
-        router.replace("account"); // Redirect to the `/account` page
+        router.replace('account'); // Redirect to the `/account` page
       }
     } catch (error) {
       console.error('Sign-in error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,8 +86,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
-
           <div className="text-right">
             <a
               href="/forgot-password"
@@ -99,9 +102,13 @@ export default function LoginPage() {
           )}
 
           {/* Sign In Button */}
-          <Button className="w-full bg-blue-500 text-white hover:bg-blue-600">
+          <LoadingButton
+            className="w-full bg-blue-500 text-white hover:bg-blue-600"
+            isLoading={isLoading}
+            loadingText="Signing in..."
+          >
             Sign In
-          </Button>
+          </LoadingButton>
         </form>
 
         {/* Opt-Out Checkbox */}
