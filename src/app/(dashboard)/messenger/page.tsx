@@ -97,7 +97,15 @@ const MessengerPage: React.FC = () => {
       try {
         const response = await fetch('/api/meta/contacts');
         const data = await response.json();
-        setContacts(data || []);
+        
+        // Transform data to set default names for undefined values
+        const contactsWithDefaults = data.map((contact: any) => ({
+          ...contact,
+          firstName: contact.firstName || 'Guest',
+          lastName: contact.lastName || '',
+        }));
+        
+        setContacts(contactsWithDefaults || []);
       } catch (error) {
         console.error('Error fetching contacts:', error);
         setContacts([]);
@@ -287,14 +295,14 @@ const MessengerPage: React.FC = () => {
                                 contact.profilePic ||
                                 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'
                               }
-                              alt={`${contact.firstName} ${contact.lastName}'s profile`}
+                              alt={`${contact.firstName || 'Guest'} ${contact.lastName || ''}'s profile`}
                               className="w-full h-full object-cover"
                             
                             />
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium truncate">
-                              {contact.firstName} {contact.lastName}
+                              {contact.firstName || 'Guest'} {contact.lastName || ''}
                             </p>
                             {contact.lastMessage && (
                               <p className="text-sm text-gray-500 truncate">
@@ -317,35 +325,6 @@ const MessengerPage: React.FC = () => {
                             )}
                           </p>
                         )}
-                        {/*                         
-                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
-                          {contact.profilePic ? (
-                            <img
-                              src={contact.profilePic}
-                              alt={`${contact.firstName}'s profile`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.onerror = null;
-                                target.src = '';
-                                target.parentElement!.innerHTML = `<span class="text-gray-600 text-sm font-medium">${contact.firstName?.[0] || 'U'}</span>`;
-                              }}
-                            />
-                          ) : (
-                            <span className="text-gray-600 text-sm font-medium">
-                              {contact.firstName?.[0] || 'U'}
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
-                            {contact.firstName} {contact.lastName}
-                          </p>
-                          <p className="text-sm text-gray-500 truncate">
-                            {contact.lastInteraction || 'No messages yet'}
-                          </p>
-                        </div> */}
                       </li>
                     ))}
                   </ul>
@@ -386,28 +365,18 @@ const MessengerPage: React.FC = () => {
                       </button>
 
                       <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center mr-3">
-                        {selectedContact.profilePic ? (
                           <img
-                            src={selectedContact.profilePic}
-                            alt={`${selectedContact.firstName}'s profile`}
+                          src={selectedContact.profilePic || 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'}
+                            alt={`${selectedContact.firstName || 'Guest'} ${selectedContact.lastName || ''}'s profile`}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.onerror = null;
-                              target.src = '';
-                              target.parentElement!.innerHTML = `<span class="text-gray-600 text-sm font-medium">${selectedContact.firstName?.[0] || 'U'}</span>`;
-                            }}
+                          
                           />
-                        ) : (
-                          <span className="text-gray-600 text-sm font-medium">
-                            {selectedContact.firstName?.[0] || 'U'}
-                          </span>
-                        )}
+                      
                       </div>
 
                       <div className="flex-1">
                         <h2 className="font-semibold">
-                          {selectedContact.firstName} {selectedContact.lastName}
+                          {selectedContact.firstName || 'Guest'} {selectedContact.lastName || ''}
                         </h2>
                       </div>
                     </div>
