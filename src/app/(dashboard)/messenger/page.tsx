@@ -46,10 +46,14 @@ interface Contact {
   lastName: string;
   profilePic: string;
   lastInteraction: string;
+  lastMessage: string;
+  lastMessageAt: string;
 }
 
 const MessengerPage: React.FC = () => {
   const router = useRouter();
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -73,7 +77,7 @@ const MessengerPage: React.FC = () => {
           setLoading(false);
           return;
         }
-        
+
         setIsConnected(true);
         setLoading(false);
       } catch (error) {
@@ -169,7 +173,7 @@ const MessengerPage: React.FC = () => {
     };
 
     // Optimistically add message to UI
-    setMessages((prev) => [...prev, tempMessage]);
+    setMessages((prev) => [tempMessage, ...prev]);
     setNewMessage('');
 
     try {
@@ -200,6 +204,10 @@ const MessengerPage: React.FC = () => {
       setMessages(updatedMessages);
     } catch (error) {
       console.error('Error sending message:', error);
+      setErrorMessage(
+        'Failed to send message. Your token might have expired. Please try reconnecting your Messenger account.'
+      );
+      setIsErrorModalOpen(true);
       // Remove the temporary message if send failed
       setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
     }
@@ -207,6 +215,10 @@ const MessengerPage: React.FC = () => {
 
   const handleModalConfirm = () => {
     router.push('/account');
+  };
+
+  const handleErrorModalClose = () => {
+    setIsErrorModalOpen(false);
   };
 
   const filteredContacts = contacts.filter((contact) =>
@@ -224,6 +236,14 @@ const MessengerPage: React.FC = () => {
         confirmText="Go to Settings"
         onConfirm={handleModalConfirm}
       />
+      <Modal
+        isOpen={isErrorModalOpen}
+        title="Error Sending Message"
+        message={errorMessage}
+        confirmText="Reconnect Account"
+        cancelText="Close"
+        onConfirm={handleModalConfirm}
+      />
       {loading ? (
         <div className="flex items-center justify-center h-screen">
           <div>Loading...</div>
@@ -233,7 +253,7 @@ const MessengerPage: React.FC = () => {
         isConnected && (
           <div className="flex flex-col md:flex-row h-screen bg-gray-100">
             {/* Contacts List - Full screen on mobile when showing contacts */}
-            <div 
+            <div
               className={`${
                 showContacts ? 'block' : 'hidden'
               } md:block w-full md:w-1/3 lg:w-1/4 bg-white border-r h-screen md:h-auto`}
@@ -257,9 +277,51 @@ const MessengerPage: React.FC = () => {
                     {filteredContacts.map((contact) => (
                       <li
                         key={contact._id}
-                        className="flex items-center space-x-3 p-3 hover:bg-gray-100 cursor-pointer"
+                        className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer"
                         onClick={() => handleContactClick(contact)}
                       >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                            <img
+                              src={
+                                contact.profilePic ||
+                                '/images/default-avatar.png'
+                              }
+                              alt={`${contact.firstName} ${contact.lastName}'s profile`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/images/default-avatar.png';
+                                target.onerror = null;
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">
+                              {contact.firstName} {contact.lastName}
+                            </p>
+                            {contact.lastMessage && (
+                              <p className="text-sm text-gray-500 truncate">
+                                {contact.lastMessage}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {contact.lastMessageAt && (
+                          <p className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                            {new Date(
+                              contact.lastMessageAt
+                            ).toLocaleDateString()}{' '}
+                            {new Date(contact.lastMessageAt).toLocaleTimeString(
+                              [],
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }
+                            )}
+                          </p>
+                        )}
+                        {/*                         
                         <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
                           {contact.profilePic ? (
                             <img
@@ -287,7 +349,7 @@ const MessengerPage: React.FC = () => {
                           <p className="text-sm text-gray-500 truncate">
                             {contact.lastInteraction || 'No messages yet'}
                           </p>
-                        </div>
+                        </div> */}
                       </li>
                     ))}
                   </ul>
@@ -296,7 +358,7 @@ const MessengerPage: React.FC = () => {
             </div>
 
             {/* Chat Area - Full screen on mobile when a contact is selected */}
-            <div 
+            <div
               className={`${
                 !showContacts ? 'block' : 'hidden'
               } md:block w-full md:w-2/3 lg:w-3/4 h-screen md:h-auto`}
@@ -307,15 +369,26 @@ const MessengerPage: React.FC = () => {
                     {/* Chat Header with Back Button */}
                     <div className="flex items-center p-4 border-b">
                       {/* Back button - Only visible on mobile */}
-                      <button 
+                      <button
                         className="md:hidden mr-2 p-1 rounded-full hover:bg-gray-200"
                         onClick={handleBackToContacts}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 19l-7-7 7-7"
+                          />
                         </svg>
                       </button>
-                      
+
                       <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center mr-3">
                         {selectedContact.profilePic ? (
                           <img
@@ -335,14 +408,14 @@ const MessengerPage: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="flex-1">
                         <h2 className="font-semibold">
                           {selectedContact.firstName} {selectedContact.lastName}
                         </h2>
                       </div>
                     </div>
-                    
+
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
                       {messages.length > 0 ? (
@@ -359,17 +432,24 @@ const MessengerPage: React.FC = () => {
                               }`}
                             >
                               <p className="break-words">{msg.content}</p>
-                              <div className={`text-xs mt-1 ${
-                                msg.messageType === MessageType.OUTGOING ? "text-white/80" : "text-gray-500"
-                              }`}>
-                                {new Date(msg.timestamp).toLocaleString('en-US', {
-                                  hour: 'numeric',
-                                  minute: 'numeric',
-                                  hour12: true,
-                                  month: 'numeric',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                })}
+                              <div
+                                className={`text-xs mt-1 ${
+                                  msg.messageType === MessageType.OUTGOING
+                                    ? 'text-white/80'
+                                    : 'text-gray-500'
+                                }`}
+                              >
+                                {new Date(msg.timestamp).toLocaleString(
+                                  'en-US',
+                                  {
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    hour12: true,
+                                    month: 'numeric',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  }
+                                )}
                               </div>
                             </div>
                           </div>
@@ -407,11 +487,26 @@ const MessengerPage: React.FC = () => {
                 ) : (
                   <div className="h-full flex items-center justify-center text-gray-500 p-4">
                     <div className="text-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-12 w-12 mx-auto text-gray-400 mb-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
                       </svg>
-                      <p className="text-lg font-medium">Select a contact to start messaging</p>
-                      <p className="text-sm mt-2">Your conversations will appear here</p>
+                      <p className="text-lg font-medium">
+                        Select a contact to start messaging
+                      </p>
+                      <p className="text-sm mt-2">
+                        Your conversations will appear here
+                      </p>
                     </div>
                   </div>
                 )}

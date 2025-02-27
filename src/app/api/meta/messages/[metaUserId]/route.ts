@@ -37,7 +37,7 @@ export async function GET(
       : {};
 
     const messages = await MessengerMessage.find(query)
-      .sort({ timestamp: 1 })
+      .sort({ timestamp: -1 })
       .lean();
 
     return NewResponse(200, messages, null);

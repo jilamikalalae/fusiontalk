@@ -10,6 +10,9 @@ import authOptions from '@/lib/authOptions';
 import { MessageType } from '@/enum/enum';
 import { v4 } from 'uuid';
 import { DecryptString } from '@/lib/crypto';
+import { upsertMessengerContact } from '@/lib/db';
+import { IMessengerContact } from '@/domain/MessengerContact';
+import MessengerContact from '@/models/messengerContact';
 
 export async function POST(req: Request) {
   try {
@@ -69,6 +72,26 @@ export async function POST(req: Request) {
     };
 
     await MessengerMessage.create(newMessage);
+
+    const messengerContact: IMessengerContact | null =
+      await MessengerContact.findOne({
+        pageId: user.messengerToken.pageId,
+        userId: messageData.recipientId
+      });
+
+    if (!messengerContact) {
+      return NewResponse(404, null, 'messenger contact is not found');
+    }
+
+    await upsertMessengerContact({
+      userId: messageData.recipientId,
+      pageId: user.messengerToken.pageId,
+      firstName: messengerContact.firstName,
+      lastName: messengerContact.lastName,
+      profilePic: messengerContact.profilePic,
+      lastMessage: messageData.content
+    });
+
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error storing message:', error);
@@ -78,16 +101,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-// export async function GET() {
-//   try {
-//     const messages = await getMessengerMessages();
-//     return NextResponse.json(messages);
-//   } catch (error) {
-//     console.error('Error fetching messages:', error);
-//     return NextResponse.json(
-//       { error: 'Failed to fetch messages' },
-//       { status: 500 }
-//     );
-//   }
-// }

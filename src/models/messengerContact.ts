@@ -8,7 +8,9 @@ const messengerContactSchema = new Schema<IMessengerContact>(
     firstName: { type: String, required: true },
     lastName: { type: String },
     profilePic: { type: String },
-    lastInteraction: { type: Date, default: Date.now }
+    lastInteraction: { type: Date, default: Date.now },
+    lastMessageAt: { type: Date, default: Date.now },
+    lastMessage: { type: String }
   },
   { timestamps: true }
 );
