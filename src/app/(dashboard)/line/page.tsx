@@ -105,20 +105,32 @@ const LinePage: React.FC = () => {
   ) || [];
 
   const handleSendMessage = async () => {
-    if (!selectedContact || !inputMessage.trim()) {
-      alert('Please select a contact and enter a message');
-      return;
-    }
+    if (!selectedContact || !inputMessage.trim()) return;
+
+    // Create temporary message with matching ID structure
+    const tempMessage: Message = {
+      _id: {
+        $oid: `temp-${Date.now()}`
+      },
+      id: `temp-${Date.now()}`,
+      content: inputMessage,
+      messageType: 'bot',
+      userId: selectedContact.userId,
+      replyTo: selectedContact.userId,
+      createdAt: new Date().toISOString(),
+      userName: 'You'
+    };
+
+    setMessages(prev => [tempMessage, ...prev]);
+    setInputMessage('');
 
     const messageData = {
       content: inputMessage,
       incomingLineId: selectedContact.userId
     };
-    
-    console.log('Sending message data:', messageData);
 
     try {
-      let response = await fetch('/api/line/messages', {
+      const response = await fetch('/api/line/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,10 +144,10 @@ const LinePage: React.FC = () => {
         throw new Error('Failed to send message');
       }
 
-      setInputMessage('');
+      // Fetch updated messages
+      const messagesResponse = await fetch(`/api/line/messages/${selectedContact.userId}`);
+      const data = await messagesResponse.json();
       
-      response = await fetch(`/api/line/messages/${selectedContact.userId}`);
-      const data = await response.json();
       // Transform the data to match the Message type
       const transformedMessages = data.map((msg: any) => ({
         id: msg._id.$oid,
@@ -149,6 +161,8 @@ const LinePage: React.FC = () => {
 
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove the temporary message if send failed
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
       alert('Failed to send message');
     }
   };
