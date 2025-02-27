@@ -285,15 +285,10 @@ const MessengerPage: React.FC = () => {
                             <img
                               src={
                                 contact.profilePic ||
-                                '/images/default-avatar.png'
+                                'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'
                               }
                               alt={`${contact.firstName} ${contact.lastName}'s profile`}
                               className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = '/images/default-avatar.png';
-                                target.onerror = null;
-                              }}
                             />
                           </div>
                           <div className="min-w-0">

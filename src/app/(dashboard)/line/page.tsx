@@ -214,14 +214,9 @@ const LinePage: React.FC = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                           <img
-                            src={contact.pictureUrl || '/images/default-avatar.png'}
+                            src={contact.pictureUrl || 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'}
                             alt={`${contact.displayName}'s profile`}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/images/default-avatar.png';
-                              target.onerror = null;
-                            }}
                           />
                         </div>
                         <div className="min-w-0">
@@ -270,7 +265,7 @@ const LinePage: React.FC = () => {
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/images/default-avatar.png';
+                            target.src = 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
                             target.onerror = null;
                           }}
                         />
