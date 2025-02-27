@@ -1,3 +1,5 @@
+import { MessageType } from '@/enum/enum';
+
 export interface ILineContact {
   incomingLineId: string;
   outgoingLineId: string;
@@ -16,9 +18,4 @@ export interface ILineMessage {
   messageType: MessageType;
   content: string;
   createdAt: Date;
-}
-
-export enum MessageType {
-  OUTGOING = 'OUTGOING',
-  INCOMING = 'INCOMING'
 }

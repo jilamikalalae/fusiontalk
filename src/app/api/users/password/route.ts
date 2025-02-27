@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/user';
 import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
-import { connectMongoDB } from '@/lib/mongodb';
+import connectMongoDB from '@/lib/mongodb';
 import bcrypt from 'bcryptjs';
 import { NewResponse } from '@/types/api-response';
 
@@ -17,7 +17,7 @@ export async function PUT(req: NextRequest) {
     const request: UpdatePasswordRequest = await req.json();
 
     if (!request.password || !request.newPassword || !request.checkPassword) {
-      return NewResponse(400,null,'All fields are required.')
+      return NewResponse(400, null, 'All fields are required.');
     }
 
     const session = await getServerSession(authOptions as AuthOptions);
@@ -39,21 +39,24 @@ export async function PUT(req: NextRequest) {
     );
 
     if (!isPasswordValid) {
-      return NewResponse(400,null,'Current password is incorrect.')
+      return NewResponse(400, null, 'Current password is incorrect.');
     }
     // Check if new passwords match
     if (request.newPassword !== request.checkPassword) {
-      return NewResponse(400,null,"New passwords don't match.")
+      return NewResponse(400, null, "New passwords don't match.");
     }
 
     // Hash the new password and update it
     const hashedNewPassword = await bcrypt.hash(request.newPassword, 10);
     await User.findByIdAndUpdate(id, { password: hashedNewPassword });
 
-    return NewResponse(200,null,null )
-    
+    return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error connecting Line account:', error);
-    return NewResponse(500,null, 'Failed to connect Line account. Please try again later.' )
+    return NewResponse(
+      500,
+      null,
+      'Failed to connect Line account. Please try again later.'
+    );
   }
 }

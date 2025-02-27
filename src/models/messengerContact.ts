@@ -1,6 +1,7 @@
-import mongoose from 'mongoose';
+import { IMessengerContact } from '@/domain/MessengerContact';
+import mongoose, { Schema } from 'mongoose';
 
-const messengerContactSchema = new mongoose.Schema({
+const messengerContactSchema = new Schema<IMessengerContact>({
   userId: { type: String, required: true, unique: true },
   firstName: { type: String, required: true },
   lastName: { type: String },

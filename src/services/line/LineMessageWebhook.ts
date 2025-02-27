@@ -2,8 +2,9 @@ import { ILineRepository } from '@/repositories/line/ILineRepository';
 import { NewResponse } from '@/types/api-response';
 import { NextResponse } from 'next/server';
 import { LineWebhookPayload, LineProfileResponse } from '@/types/line-webhook';
-import { ILineContact, MessageType } from '@/domain/LineMessage';
+import { ILineContact } from '@/domain/LineMessage';
 import { IUserRepository } from '@/repositories/user/IUserRepository';
+import { MessageType } from '@/enum/enum';
 import { DecryptString } from '@/lib/crypto';
 
 export class LineMessageWebhook {

@@ -1,5 +1,5 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import { connectMongoDB } from "@/lib/mongodb";
+import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import bcrypt from "bcryptjs";
 
