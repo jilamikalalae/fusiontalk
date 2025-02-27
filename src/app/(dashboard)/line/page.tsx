@@ -212,19 +212,17 @@ const LinePage: React.FC = () => {
                       onClick={() => handleContactClick(contact)}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
-                          {contact.pictureUrl ? (
-                            <img 
-                              src={contact.pictureUrl} 
-                              alt={contact.displayName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
-                              }}
-                            />
-                          ) : (
-                            <span className="text-white text-xs">LINE</span>
-                          )}
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                          <img
+                            src={contact.pictureUrl || '/images/default-avatar.png'}
+                            alt={`${contact.displayName}'s profile`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/images/default-avatar.png';
+                              target.onerror = null;
+                            }}
+                          />
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium truncate">{contact.displayName}</p>
@@ -264,18 +262,20 @@ const LinePage: React.FC = () => {
                       </svg>
                     </button>
                     
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
                       {selectedContact.pictureUrl ? (
-                        <img 
-                          src={selectedContact.pictureUrl} 
-                          alt={selectedContact.displayName}
+                        <img
+                          src={selectedContact.pictureUrl}
+                          alt={`${selectedContact.displayName}'s profile`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/images/default-avatar.png';
+                            target.onerror = null;
                           }}
                         />
                       ) : (
-                        <span className="text-white text-xs">LINE</span>
+                        <span className="text-white text-xs">{selectedContact.displayName.charAt(0)}</span>
                       )}
                     </div>
                     <div className="min-w-0">

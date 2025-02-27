@@ -257,27 +257,36 @@ const MessengerPage: React.FC = () => {
                     {filteredContacts.map((contact) => (
                       <li
                         key={contact._id}
-                        className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer"
+                        className="flex items-center space-x-3 p-3 hover:bg-gray-100 cursor-pointer"
                         onClick={() => handleContactClick(contact)}
                       >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                          {contact.profilePic ? (
                             <img
-                              src={contact.profilePic || 'https://via.placeholder.com/40'}
+                              src={contact.profilePic}
                               alt={`${contact.firstName}'s profile`}
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = '';
+                                target.parentElement!.innerHTML = `<span class="text-gray-600 text-sm font-medium">${contact.firstName?.[0] || 'U'}</span>`;
                               }}
                             />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{`${contact.firstName} ${contact.lastName}`}</p>
-                            <p className="text-sm text-gray-500 truncate">
-                              Last active:{' '}
-                              {new Date(contact.lastInteraction).toLocaleDateString()}
-                            </p>
-                          </div>
+                          ) : (
+                            <span className="text-gray-600 text-sm font-medium">
+                              {contact.firstName?.[0] || 'U'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">
+                            {contact.firstName} {contact.lastName}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {contact.lastInteraction || 'No messages yet'}
+                          </p>
                         </div>
                       </li>
                     ))}
@@ -307,22 +316,30 @@ const MessengerPage: React.FC = () => {
                         </svg>
                       </button>
                       
-                      <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center mr-3">
                         {selectedContact.profilePic ? (
                           <img
                             src={selectedContact.profilePic}
-                            alt={`${selectedContact.firstName} ${selectedContact.lastName}`}
+                            alt={`${selectedContact.firstName}'s profile`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = '';
+                              target.parentElement!.innerHTML = `<span class="text-gray-600 text-sm font-medium">${selectedContact.firstName?.[0] || 'U'}</span>`;
                             }}
                           />
                         ) : (
-                          <span className="text-white text-xs">FB</span>
+                          <span className="text-gray-600 text-sm font-medium">
+                            {selectedContact.firstName?.[0] || 'U'}
+                          </span>
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <h2 className="text-xl font-bold truncate">{`${selectedContact.firstName} ${selectedContact.lastName}`}</h2>
+                      
+                      <div className="flex-1">
+                        <h2 className="font-semibold">
+                          {selectedContact.firstName} {selectedContact.lastName}
+                        </h2>
                       </div>
                     </div>
                     
