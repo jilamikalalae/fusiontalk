@@ -31,7 +31,7 @@ export async function upsertMessengerContact(contactData) {
     await connectMongoDB();
 
     const contact = await MessengerContact.findOneAndUpdate(
-      { userId: contactData.userId },
+      { userId: contactData.userId, pageId: contactData.pageId },
       {
         firstName: contactData.firstName,
         lastName: contactData.lastName,

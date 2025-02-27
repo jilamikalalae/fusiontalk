@@ -6,6 +6,7 @@ import bg1 from '@/app/login/bg1.webp';
 import React, { FormEvent, useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { redirect } from 'next/navigation';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -14,6 +15,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const { data: session } = useSession();
 
@@ -33,6 +35,7 @@ export default function RegisterPage() {
     }
 
     try {
+      setIsLoading(true);
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,6 +66,8 @@ export default function RegisterPage() {
     } catch (error) {
       console.error('Error during registration:', error);
       setError('Something went wrong. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -171,12 +176,14 @@ export default function RegisterPage() {
             )}
 
             {/* Submit Button */}
-            <Button
+            <LoadingButton
               type="submit"
               className="w-full bg-blue-500 text-white hover:bg-blue-600"
+              isLoading={isLoading}
+              loadingText="Creating account..."
             >
               Sign Up
-            </Button>
+            </LoadingButton>
           </form>
 
           {/* Login Redirect */}

@@ -8,8 +8,8 @@ const messengerMessageSchema = new Schema<IMessengerMessage>({
   senderName: String,
   messageType: {
     type: String,
-    required: true,
-    enum: ['user', 'page']
+    enum: Object.values(MessageType),
+    required: true
   },
   content: { type: String, required: true },
   messageId: String,
@@ -17,5 +17,8 @@ const messengerMessageSchema = new Schema<IMessengerMessage>({
   isRead: { type: Boolean, default: false }
 });
 
-export default mongoose.models.MessengerMessage ||
+const MessengerMessage =
+  mongoose.models.MessengerMessage ||
   mongoose.model('MessengerMessage', messengerMessageSchema);
+
+export default MessengerMessage;
