@@ -39,7 +39,7 @@ const AccountManagementPage: React.FC = () => {
           name: data.name || '',
           email: data.email || '',
           isLineConnected: data.isLineConnected || false,
-          isMessengerConnected: data.isMessengerConnect || false
+          isMessengerConnected: data.isMessengerConnected || false
         });
       } catch (error) {
         console.error(error);
@@ -104,15 +104,15 @@ const AccountManagementPage: React.FC = () => {
     <div>
       <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
         <div className="flex-1 flex justify-end">
-            {!isEditing && (
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 border-2 border-red-500 text-red-500 bg-white rounded-lg"
-              >
-                Edit
-              </button>
-            )}
-          </div>
+          {!isEditing && (
+            <button
+              onClick={handleEdit}
+              className="px-4 py-2 border-2 border-red-500 text-red-500 bg-white rounded-lg"
+            >
+              Edit
+            </button>
+          )}
+        </div>
 
         {/* Full Name */}
         <div>

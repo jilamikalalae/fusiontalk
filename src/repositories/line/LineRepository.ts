@@ -64,7 +64,7 @@ export class LineRepository implements ILineRepository {
         query.incomingLineId = incomingLineId;
       }
 
-      return await LineContact.find(query).sort({ createdAt: -1 }).exec();
+      return await LineContact.find(query).sort({ lastMessageAt: -1 }).exec();
     } catch (e) {
       console.error('Error fetching line contacts:', e);
       throw new Error('Failed to fetch contacts');
