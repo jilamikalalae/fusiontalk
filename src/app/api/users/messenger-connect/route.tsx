@@ -1,6 +1,6 @@
 import { NewResponse } from "@/types/api-response";
 import { NextRequest } from "next/server";
-import { connectMongoDB } from '@/lib/mongodb';
+import connectMongoDB  from '@/lib/mongodb';
 import User from '@/models/user';
 import { AuthOptions, getServerSession } from 'next-auth';
 import authOptions from '@/lib/authOptions';
@@ -8,9 +8,9 @@ import { EncryptString } from '@/lib/crypto';
 
 export async function POST(req:NextRequest) {
     try{
-        const { accessToken, userId } = await req.json();
+        const { accessToken, pageId } = await req.json();
 
-        if(!accessToken || !userId) {
+        if(!accessToken || !pageId) {
             return NewResponse(400, null, 'All fields are required.')
         }
 
@@ -30,23 +30,20 @@ export async function POST(req:NextRequest) {
         }
 
         const encryptAccessToken = EncryptString(accessToken)
-        const encryptUserId = EncryptString(userId)
 
         let messengerToken = {} as any;
         messengerToken.accessToken = encryptAccessToken.encrypted;
         messengerToken.accessTokenIv = encryptAccessToken.iv;
-        messengerToken.userId = encryptUserId.encrypted;
-        messengerToken.userIdIv = encryptUserId.iv;
+        messengerToken.pageId = pageId
         existingUser.messengerToken = messengerToken;
-        // console.log(existingUser)
 
         await existingUser.save();
         return NewResponse(200, null, null)
-    } catch (error) {
+    } catch (error:any) {
         console.error('Error connecting Messenger account:', error);
-        return NewResponse(500, null, null);
+        return NewResponse(500, null, error.message);
     }
-    
+
 }
 
 

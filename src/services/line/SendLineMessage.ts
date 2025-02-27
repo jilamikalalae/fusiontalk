@@ -3,7 +3,7 @@ import { IUserRepository } from '@/repositories/user/IUserRepository';
 import { NewResponse } from '@/types/api-response';
 import { NextResponse } from 'next/server';
 import { SendLineMessageRequestDto } from './dto/SendLineMessageRequestDto';
-import { MessageType } from '@/domain/LineMessage';
+import { MessageType } from '@/enum/enum';
 import { v4 as uuidv4 } from 'uuid';
 import { LineSendPushMessageRequest } from '@/types/line-webhook';
 import { DecryptString } from '@/lib/crypto';
@@ -58,16 +58,16 @@ export class SendLineMessage {
         body: JSON.stringify(sendPushMessageRequest)
       });
 
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`LINE API error: ${response.status} ${errorData}`);
+      }
+
       this.lineRepository.addMessageToContact(
         lineContact,
         MessageType.OUTGOING,
         req.content
       );
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`LINE API error: ${response.status} ${errorData}`);
-      }
 
       return NewResponse(200, lineContacts[0].messages, null);
     } catch (e: any) {

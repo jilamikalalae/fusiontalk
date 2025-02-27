@@ -28,7 +28,7 @@ export default function MessengerConnect({
 }: MessengerConnectProps) {
   const [open, setOpen] = React.useState(false);
   const [accessToken, setAccessToken] = React.useState('');
-  const [userId, setUserId] = React.useState('');
+  const [pageId, setPageId] = React.useState('');
   const [error, setError] = React.useState('');
   const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
   const [connectionTime, setConnectionTime] = React.useState<number | null>(null);
@@ -63,13 +63,13 @@ export default function MessengerConnect({
   const handleClose = () => {
     setOpen(false);
     setAccessToken('');
-    setUserId('');
+    setPageId('');
     setError('');
     setUnlinkConfirm(false);
   };
 
   const handleConnect = async () => {
-    if (!accessToken || !userId) {
+    if (!accessToken || !pageId) {
       setError('Both fields are required.');
       return;
     }
@@ -78,7 +78,7 @@ export default function MessengerConnect({
       const response = await fetch('/api/users/messenger-connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, userId })
+        body: JSON.stringify({ accessToken, pageId })
       });
 
       if (!response.ok) {
@@ -155,11 +155,11 @@ export default function MessengerConnect({
 
               <TextField
                 fullWidth
-                label="User Id"
+                label="Page Id"
                 variant="outlined"
                 margin="normal"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                value={pageId}
+                onChange={(e) => setPageId(e.target.value)}
               />
 
               {error && <Typography color="error">{error}</Typography>}

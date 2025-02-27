@@ -1,4 +1,5 @@
-import { ILineContact, ILineMessage, MessageType } from '@/domain/LineMessage';
+import { ILineContact, ILineMessage } from '@/domain/LineMessage';
+import { MessageType } from '@/enum/enum';
 
 export interface ILineRepository {
   addMessageToContact(

@@ -22,6 +22,15 @@ export class GetUserById {
         isLineConnected = true;
       }
 
+      if (
+        user.messengerToken &&
+        user.messengerToken.accessToken &&
+        user.messengerToken.accessTokenIv &&
+        user.messengerToken.pageId
+      ) {
+        isMessengerConnected = true;
+      }
+
       const userResponse: GetUserResponseDto = {
         name: user.name,
         email: user.email,

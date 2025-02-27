@@ -1,8 +1,9 @@
-import { connectMongoDB } from '@/lib/mongodb';
+import connectMongoDB from '@/lib/mongodb';
 import { LineContact, LineMessage } from '@/models/lineMessage';
 import { ILineRepository } from './ILineRepository';
-import { ILineContact, ILineMessage, MessageType } from '@/domain/LineMessage';
+import { ILineContact, ILineMessage } from '@/domain/LineMessage';
 import mongoose from 'mongoose';
+import { MessageType } from '@/enum/enum';
 
 export class LineRepository implements ILineRepository {
   async addMessageToContact(
@@ -56,14 +57,14 @@ export class LineRepository implements ILineRepository {
     incomingLineId: string | null
   ): Promise<ILineContact[]> {
     try {
+      await connectMongoDB();
+
       const query: any = { outgoingLineId };
       if (incomingLineId) {
-        query.incomingLineId = incomingLineId; // Add only if it's not null
+        query.incomingLineId = incomingLineId;
       }
 
-      return await LineContact.find(query)
-        .sort({ createdAt: 1 }) // Sorting by createdAt in ascending order
-        .exec();
+      return await LineContact.find(query).sort({ createdAt: -1 }).exec();
     } catch (e) {
       console.error('Error fetching line contacts:', e);
       throw new Error('Failed to fetch contacts');

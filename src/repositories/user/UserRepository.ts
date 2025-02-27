@@ -1,4 +1,4 @@
-import { connectMongoDB } from '@/lib/mongodb';
+import connectMongoDB from '@/lib/mongodb';
 import User from '@/models/user';
 import { IUserRepository } from './IUserRepository';
 import { IUser } from '@/domain/User';

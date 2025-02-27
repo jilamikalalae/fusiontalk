@@ -1,13 +1,15 @@
-import mongoose from 'mongoose';
+import { IMessengerMessage } from '@/domain/MessengerMessage';
+import { MessageType } from '@/enum/enum';
+import mongoose, { Schema } from 'mongoose';
 
-const messengerMessageSchema = new mongoose.Schema({
+const messengerMessageSchema = new Schema<IMessengerMessage>({
   senderId: { type: String, required: true },
   recipientId: { type: String, required: true },
   senderName: String,
-  messageType: { 
-    type: String, 
+  messageType: {
+    type: String,
     required: true,
-    enum: ['user', 'page']  // Only allow these two values
+    enum: ['user', 'page']
   },
   content: { type: String, required: true },
   messageId: String,
@@ -15,4 +17,5 @@ const messengerMessageSchema = new mongoose.Schema({
   isRead: { type: Boolean, default: false }
 });
 
-export default mongoose.models.MessengerMessage || mongoose.model('MessengerMessage', messengerMessageSchema);
+export default mongoose.models.MessengerMessage ||
+  mongoose.model('MessengerMessage', messengerMessageSchema);

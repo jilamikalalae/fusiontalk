@@ -12,5 +12,6 @@ export interface IUser {
   messengerToken: {
     accessTokenIv: string;
     accessToken: string;
+    pageId: string;
   } | null;
 }

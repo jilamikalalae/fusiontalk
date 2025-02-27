@@ -1,5 +1,6 @@
-import { ILineContact, ILineMessage, MessageType } from '@/domain/LineMessage';
+import { ILineContact, ILineMessage } from '@/domain/LineMessage';
 import mongoose, { Schema } from 'mongoose';
+import { MessageType } from '@/enum/enum';
 
 const LineMessageSchema = new Schema<ILineMessage>({
   messageType: {

@@ -1,11 +1,20 @@
+import { connect } from 'http2';
 import mongoose from 'mongoose';
 
-export const connectMongoDB = async () => {
+const connection = {};
+
+const connectMongoDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    if (connection.isConnected) return;
+
+    const db = await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
+
+    connection.isConnected = db.connections[0].readyState;
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
     throw error;
   }
 };
+
+export default connectMongoDB;

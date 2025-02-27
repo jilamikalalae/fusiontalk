@@ -16,7 +16,7 @@ const userSchema = new Schema<IUser>(
     messengerToken: {
       accessTokenIv: { type: String },
       accessToken: { type: String, unique: true },
-      userId: { type: String, unique: true }
+      pageId: { type: String, unique: true }
     }
   },
   { timestamps: true, collection: 'users' }
