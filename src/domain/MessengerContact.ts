@@ -5,4 +5,6 @@ export interface IMessengerContact {
   lastName: string;
   profilePic: string;
   lastInteraction: Date;
+  lastMessage: String;
+  lastMessageAt: Date;
 }

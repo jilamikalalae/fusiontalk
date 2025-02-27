@@ -36,7 +36,9 @@ export async function upsertMessengerContact(contactData) {
         firstName: contactData.firstName,
         lastName: contactData.lastName,
         profilePic: contactData.profilePic,
-        lastInteraction: new Date()
+        lastInteraction: new Date(),
+        lastMessage: contactData.lastMessage,
+        lastMessageAt: new Date()
       },
       { upsert: true, new: true }
     );

@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
         pageId: messaging[0].recipient.id,
         firstName: profile.first_name,
         lastName: profile.last_name,
-        profilePic: profile.profile_pic
+        profilePic: profile.profile_pic,
+        lastMessage: messaging[0].message.text
       });
 
       await storeMessengerMessage({
