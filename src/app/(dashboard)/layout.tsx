@@ -60,9 +60,6 @@ function DesktopNav() {
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png" className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="/analytics" label="Analytics">
-          <LineChart className="h-5 w-5" />
-        </NavItem>
 
         <NavItem href="/account" label="Account">
           <CircleUserRound className="h-5 w-5" />
