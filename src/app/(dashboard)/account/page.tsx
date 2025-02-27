@@ -259,11 +259,6 @@ const AccountManagementPage: React.FC = () => {
               >
                 Log out
               </button>
-              <button 
-                className="px-6 py-3 border border-red-500 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-auto text-center"
-              >
-                Delete my account
-              </button>
             </div>
           </div>
         </div>
