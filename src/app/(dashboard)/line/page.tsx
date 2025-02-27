@@ -186,7 +186,7 @@ const LinePage: React.FC = () => {
         </div>
       ) : (
         <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-          {/* Sidebar */}
+          {/* Sidebar - Full width on mobile, 1/3 on medium screens, 1/4 on large screens */}
           <div className="w-full md:w-1/3 lg:w-1/4 bg-white border-r">
             <Card className="h-full">
               <CardHeader className="p-4">
@@ -239,7 +239,7 @@ const LinePage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Chat Area */}
+          {/* Chat Area - Full width on mobile, 2/3 on medium screens, 3/4 on large screens */}
           <div className="w-full md:w-2/3 lg:w-3/4 p-4">
             <Card className="h-full">
               <CardContent className="flex flex-col h-[calc(100vh-2rem)]">
