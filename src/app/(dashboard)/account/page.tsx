@@ -101,13 +101,13 @@ const AccountManagementPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6">
         <div className="flex-1 flex justify-end">
           {!isEditing && (
             <button
               onClick={handleEdit}
-              className="px-4 py-2 border-2 border-red-500 text-red-500 bg-white rounded-lg"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 border-2 border-red-500 text-red-500 bg-white rounded-lg text-sm sm:text-base"
             >
               Edit
             </button>
@@ -116,7 +116,7 @@ const AccountManagementPage: React.FC = () => {
 
         {/* Full Name */}
         <div>
-          <p className="font-semibold text-lg">Name</p>
+          <p className="font-semibold text-base sm:text-lg">Name</p>
           <input
             type="text"
             value={isEditing ? editedProfile.name : userProfile.name}
@@ -125,7 +125,7 @@ const AccountManagementPage: React.FC = () => {
             }
             readOnly={!isEditing}
             placeholder="Name"
-            className={`mt-2 w-full p-3 border rounded-lg outline-none ${
+            className={`mt-2 w-full p-2 sm:p-3 border rounded-lg outline-none ${
               isEditing ? 'focus:ring-2 focus:ring-blue-500' : ''
             }`}
           />
@@ -133,7 +133,7 @@ const AccountManagementPage: React.FC = () => {
 
         {/* Contact Email */}
         <div>
-          <p className="font-semibold text-lg">Contact email</p>
+          <p className="font-semibold text-base sm:text-lg">Contact email</p>
           <input
             type="email"
             value={isEditing ? editedProfile.email : userProfile.email}
@@ -142,7 +142,7 @@ const AccountManagementPage: React.FC = () => {
             }
             readOnly={!isEditing}
             placeholder="Email address"
-            className={`mt-2 w-full p-3 border rounded-lg outline-none ${
+            className={`mt-2 w-full p-2 sm:p-3 border rounded-lg outline-none ${
               isEditing ? 'focus:ring-2 focus:ring-blue-500' : ''
             }`}
           />
@@ -150,16 +150,16 @@ const AccountManagementPage: React.FC = () => {
 
         {/* Save and Cancel Buttons */}
         {isEditing && (
-          <div className="mt-4 flex space-x-4">
+          <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg w-full sm:w-auto"
             >
               Save
             </button>
             <button
               onClick={handleCancel}
-              className="px-4 py-2 bg-gray-200 text-black rounded-lg"
+              className="px-4 py-2 bg-gray-200 text-black rounded-lg w-full sm:w-auto"
             >
               Cancel
             </button>
@@ -168,26 +168,26 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Password */}
-      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
-        <p className="font-semibold text-lg">Password</p>
+      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6 mt-6 sm:mt-10">
+        <p className="font-semibold text-base sm:text-lg">Password</p>
         <div className="relative">
           <NewPassword />
         </div>
       </div>
 
       {/* Integrated Accounts */}
-      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
-        <p className="font-semibold text-lg">Integrated accounts</p>
+      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6 mt-6 sm:mt-10">
+        <p className="font-semibold text-base sm:text-lg">Integrated accounts</p>
         <ul className="mt-4 space-y-4">
-          <li className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow">
-            <div>
+          <li className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 p-4 rounded-lg shadow">
+            <div className="mb-3 sm:mb-0">
               <p className="font-medium">Line</p>
               <p className="text-sm text-gray-500">
                 Connect your Line account.
               </p>
             </div>
             <LineConnect
-              className={`px-4 py-2 rounded-lg border-2 ${
+              className={`px-4 py-2 rounded-lg border-2 text-center ${
                 userProfile.isLineConnected
                   ? 'border-red-500 text-red-500 bg-white'
                   : 'border-gray-300 text-gray-700 bg-white'
@@ -200,15 +200,15 @@ const AccountManagementPage: React.FC = () => {
           </li>
         </ul>
         <ul className="mt-4 space-y-4">
-          <li className="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow">
-            <div>
+          <li className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 p-4 rounded-lg shadow">
+            <div className="mb-3 sm:mb-0">
               <p className="font-medium">Messenger</p>
               <p className="text-sm text-gray-500">
                 Connect your Messenger account.
               </p>
             </div>
             <MessengerConnect
-              className={`px-4 py-2 rounded-lg border-2 ${
+              className={`px-4 py-2 rounded-lg border-2 text-center ${
                 userProfile.isMessengerConnected
                   ? 'border-red-500 text-red-500 bg-white'
                   : 'border-gray-300 text-gray-700 bg-white'
@@ -223,16 +223,16 @@ const AccountManagementPage: React.FC = () => {
       </div>
 
       {/* Account Security */}
-      <div className="bg-white shadow-lg rounded-lg w-full h-full p-6 space-y-6 mt-10">
-        <p className="font-semibold text-lg">Account Security</p>
-        <div className="mt-4 flex space-x-4">
+      <div className="bg-white shadow-lg rounded-lg w-full p-4 sm:p-6 space-y-6 mt-6 sm:mt-10">
+        <p className="font-semibold text-base sm:text-lg">Account Security</p>
+        <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
           <button
             onClick={() => signOut()}
-            className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg"
+            className="px-4 py-2 border-2 border-gray-300 bg-white text-black rounded-lg w-full sm:w-auto"
           >
             Log out
           </button>
-          <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg">
+          <button className="px-4 py-2 bg-white text-red-600 rounded-lg shadow-lg w-full sm:w-auto">
             Delete my account
           </button>
         </div>

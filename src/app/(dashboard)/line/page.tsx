@@ -30,6 +30,7 @@ const LinePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showContacts, setShowContacts] = useState(true);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -100,9 +101,27 @@ const LinePage: React.FC = () => {
     checkLineConnection();
   }, []);
 
+  // On mobile, when a contact is selected, hide the contacts list
+  useEffect(() => {
+    if (selectedContact && window.innerWidth < 768) {
+      setShowContacts(false);
+    }
+  }, [selectedContact]);
+
   const filteredContacts = contacts?.filter(contact =>
     contact?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+
+  const handleContactClick = (contact: LineContact) => {
+    setSelectedContact(contact);
+    if (window.innerWidth < 768) {
+      setShowContacts(false);
+    }
+  };
+
+  const handleBackToContacts = () => {
+    setShowContacts(true);
+  };
 
   const handleSendMessage = async () => {
     if (!selectedContact || !inputMessage.trim()) return;
@@ -140,30 +159,10 @@ const LinePage: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Server error:', errorData);
-        throw new Error('Failed to send message');
+        console.error('Error sending message:', errorData);
       }
-
-      // Fetch updated messages
-      const messagesResponse = await fetch(`/api/line/messages/${selectedContact.userId}`);
-      const data = await messagesResponse.json();
-      
-      // Transform the data to match the Message type
-      const transformedMessages = data.map((msg: any) => ({
-        id: msg._id.$oid,
-        content: msg.content,
-        messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
-        userId: selectedContact.userId,
-        replyTo: selectedContact.userId,
-        createdAt: msg.createdAt
-      }));
-      setMessages(transformedMessages);
-
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove the temporary message if send failed
-      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
-      alert('Failed to send message');
     }
   };
 
@@ -186,9 +185,11 @@ const LinePage: React.FC = () => {
         </div>
       ) : (
         <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-          {/* Sidebar - Full width on mobile, 1/3 on medium screens, 1/4 on large screens */}
-          <div className="w-full md:w-1/3 lg:w-1/4 bg-white border-r">
-            <Card className="h-full">
+          {/* Sidebar - Full width on mobile when showing contacts */}
+          <div className={`${
+            showContacts ? 'block' : 'hidden'
+          } md:block w-full md:w-1/3 lg:w-1/4 bg-white border-r h-screen md:h-auto`}>
+            <Card className="h-full border-0 md:border rounded-none md:rounded-lg">
               <CardHeader className="p-4">
                 <CardTitle className="text-xl">Inbox</CardTitle>
                 <CardDescription>Newest ↑</CardDescription>
@@ -207,8 +208,8 @@ const LinePage: React.FC = () => {
                   {filteredContacts.map((contact) => (
                     <li
                       key={contact.userId}
-                      className={`flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer`}
-                      onClick={() => setSelectedContact(contact)}
+                      className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      onClick={() => handleContactClick(contact)}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
@@ -217,6 +218,9 @@ const LinePage: React.FC = () => {
                               src={contact.pictureUrl} 
                               alt={contact.displayName}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                              }}
                             />
                           ) : (
                             <span className="text-white text-xs">LINE</span>
@@ -239,75 +243,90 @@ const LinePage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Chat Area - Full width on mobile, 2/3 on medium screens, 3/4 on large screens */}
-          <div className="w-full md:w-2/3 lg:w-3/4 p-4">
-            <Card className="h-full">
-              <CardContent className="flex flex-col h-[calc(100vh-2rem)]">
-                {/* Chat Room Title with Contact Name */}
-                {selectedContact && (
+          {/* Chat Area - Full screen on mobile when a contact is selected */}
+          <div 
+            className={`${
+              !showContacts ? 'block' : 'hidden'
+            } md:block w-full md:w-2/3 lg:w-3/4 h-screen md:h-auto`}
+          >
+            <Card className="h-full border-0 md:border rounded-none md:rounded-lg">
+              {selectedContact ? (
+                <CardContent className="flex flex-col h-screen md:h-[calc(100vh-2rem)] p-0">
+                  {/* Chat Header with Back Button */}
                   <div className="flex items-center p-4 border-b">
+                    {/* Back button - Only visible on mobile */}
+                    <button 
+                      className="md:hidden mr-2 p-1 rounded-full hover:bg-gray-200"
+                      onClick={handleBackToContacts}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    
                     <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
                       {selectedContact.pictureUrl ? (
                         <img 
                           src={selectedContact.pictureUrl} 
                           alt={selectedContact.displayName}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                          }}
                         />
                       ) : (
                         <span className="text-white text-xs">LINE</span>
                       )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h2 className="text-xl font-bold truncate">{selectedContact.displayName}</h2>
                       {selectedContact.statusMessage && (
                         <p className="text-sm text-gray-500 truncate">{selectedContact.statusMessage}</p>
                       )}
                     </div>
                   </div>
-                )}
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
-                  {selectedContact && messages.length > 0 ? (
-                    messages
-                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                      .map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${
-                            msg.messageType === 'bot' ? "justify-end" : "justify-start"
-                          } mb-1`}
-                        >
+                  
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
+                    {messages.length > 0 ? (
+                      messages
+                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                        .map((msg) => (
                           <div
-                            className={`max-w-[75%] p-3 rounded-lg relative ${
-                              msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
-                            }`}
+                            key={msg.id}
+                            className={`flex ${
+                              msg.messageType === 'bot' ? "justify-end" : "justify-start"
+                            } mb-1`}
                           >
-                            {msg.content}
-                            <div className={`text-xs mt-1 ${
-                              msg.messageType === 'bot' ? "text-white/80" : "text-gray-500"
-                            }`}>
-                              {new Date(msg.createdAt).toLocaleString('en-US', {
-                                hour: 'numeric',
-                                minute: 'numeric',
-                                hour12: true,
-                                month: 'numeric',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}
+                            <div
+                              className={`max-w-[75%] p-3 rounded-lg ${
+                                msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
+                              }`}
+                            >
+                              <p className="break-words">{msg.content}</p>
+                              <div className={`text-xs mt-1 ${
+                                msg.messageType === 'bot' ? "text-white/80" : "text-gray-500"
+                              }`}>
+                                {new Date(msg.createdAt).toLocaleString('en-US', {
+                                  hour: 'numeric',
+                                  minute: 'numeric',
+                                  hour12: true,
+                                  month: 'numeric',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-center text-gray-500">
-                      {selectedContact ? "No messages yet" : "Select a contact to start chatting"}
-                    </div>
-                  )}
-                </div>
+                        ))
+                    ) : (
+                      <div className="text-center text-gray-500">
+                        No messages yet. Start a conversation!
+                      </div>
+                    )}
+                  </div>
 
-                {/* Input Box */}
-                {selectedContact && (
+                  {/* Input Box */}
                   <div className="flex items-center space-x-3 border-t p-4">
                     <input
                       type="text"
@@ -328,8 +347,18 @@ const LinePage: React.FC = () => {
                       Send
                     </button>
                   </div>
-                )}
-              </CardContent>
+                </CardContent>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500 p-4">
+                  <div className="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <p className="text-lg font-medium">Select a contact to start messaging</p>
+                    <p className="text-sm mt-2">Your conversations will appear here</p>
+                  </div>
+                </div>
+              )}
             </Card>
           </div>
         </div>
