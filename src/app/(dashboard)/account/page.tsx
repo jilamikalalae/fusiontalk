@@ -26,6 +26,9 @@ const AccountManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({ name: '', email: '' });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -101,6 +104,28 @@ const AccountManagementPage: React.FC = () => {
       ...prev,
       isMessengerConnected: isConnected
     }));
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== userProfile.email) return;
+    
+    try {
+      setIsDeleting(true);
+      const response = await fetch('/api/users', {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+      
+      // Sign out and redirect to login page
+      await signOut({ callbackUrl: '/login' });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
   };
 
   if (loading) {
@@ -260,6 +285,7 @@ const AccountManagementPage: React.FC = () => {
                 Log out
               </button>
               <button 
+                onClick={() => setIsDeleteModalOpen(true)}
                 className="px-6 py-3 border border-red-500 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-auto text-center"
               >
                 Delete my account
@@ -267,6 +293,47 @@ const AccountManagementPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Delete Account Modal */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold mb-4">Delete Account</h3>
+              <p className="mb-4 text-gray-700">
+                This action cannot be undone. All your data will be permanently deleted.
+              </p>
+              <p className="mb-6 text-gray-700">
+                Please type <span className="font-medium">{userProfile.email}</span> to confirm.
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full p-2 border rounded-lg mb-4"
+              />
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setDeleteConfirmation('');
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300"
+                  disabled={deleteConfirmation !== userProfile.email || isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

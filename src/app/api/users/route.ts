@@ -72,3 +72,32 @@ export async function PUT(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions as AuthOptions);
+    if (!session) {
+      return NewResponse(401, null, 'Unauthorized');
+    }
+
+    const id = session?.user.id;
+
+    await connectMongoDB();
+
+    // Find and delete the user
+    const deletedUser = await User.findByIdAndDelete(id);
+
+    if (!deletedUser) {
+      return NewResponse(404, null, 'User not found');
+    }
+
+    return NewResponse(200, null, 'Account deleted successfully');
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return NewResponse(
+      500,
+      null,
+      'Failed to delete account. Please try again later.'
+    );
+  }
+}
