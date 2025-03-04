@@ -10,7 +10,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (session) {
-      router.push("/line");
+      router.push("/notification");
     }
   }, [session, router]);
 
