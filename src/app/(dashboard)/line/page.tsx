@@ -23,6 +23,8 @@ interface LineContact {
 
 const LinePage: React.FC = () => {
   const router = useRouter();
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const urlUserId = searchParams.get('userId');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
   const [contacts, setContacts] = useState<LineContact[]>([]);
@@ -39,6 +41,17 @@ const LinePage: React.FC = () => {
         const data = await response.json();
         // Ensure data is an array, otherwise use empty array
         setContacts(Array.isArray(data) ? data : []);
+        
+        // If we have a userId in the URL, find and select that contact
+        if (urlUserId && Array.isArray(data)) {
+          const contactFromUrl = data.find(contact => contact.userId === urlUserId);
+          if (contactFromUrl) {
+            setSelectedContact(contactFromUrl);
+            if (window.innerWidth < 768) {
+              setShowContacts(false);
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching contacts:', error);
         setContacts([]);
@@ -50,7 +63,7 @@ const LinePage: React.FC = () => {
     const intervalId = setInterval(fetchContacts, 3000); // Poll every 3 seconds
 
     return () => clearInterval(intervalId);
-  }, []); 
+  }, [urlUserId]); 
 
   useEffect(() => {
     const fetchMessages = async () => {

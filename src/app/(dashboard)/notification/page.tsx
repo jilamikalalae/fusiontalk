@@ -55,7 +55,9 @@ const NotificationPage: React.FC = () => {
         const messengerContacts = Array.isArray(messengerData) ? messengerData.map((contact: any) => ({
           id: contact.id || contact.userId,
           source: 'messenger' as const,
-          displayName: contact.name || contact.displayName || 'Guest',
+          displayName: contact.firstName 
+            ? `${contact.firstName} ${contact.lastName || ''}`
+            : (contact.name || contact.displayName || 'Guest'),
           pictureUrl: contact.profilePic || contact.pictureUrl,
           lastMessage: contact.lastMessage,
           lastMessageAt: contact.lastMessageAt,

@@ -52,6 +52,8 @@ interface Contact {
 
 const MessengerPage: React.FC = () => {
   const router = useRouter();
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const urlUserId = searchParams.get('userId');
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,6 +108,17 @@ const MessengerPage: React.FC = () => {
         }));
         
         setContacts(contactsWithDefaults || []);
+        
+        // If we have a userId in the URL, find and select that contact
+        if (urlUserId && Array.isArray(data)) {
+          const contactFromUrl = data.find(contact => contact.userId === urlUserId);
+          if (contactFromUrl) {
+            setSelectedContact(contactFromUrl);
+            if (window.innerWidth < 768) {
+              setShowContacts(false);
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching contacts:', error);
         setContacts([]);
@@ -116,7 +129,7 @@ const MessengerPage: React.FC = () => {
 
     const intervalId = setInterval(fetchContacts, 3000); // Poll every 3 seconds
     return () => clearInterval(intervalId);
-  }, [isConnected]);
+  }, [isConnected, urlUserId]);
 
   // Only fetch messages if connected and contact selected
   useEffect(() => {
