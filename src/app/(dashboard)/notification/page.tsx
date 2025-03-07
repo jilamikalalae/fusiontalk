@@ -34,11 +34,15 @@ const NotificationPage: React.FC = () => {
   const [showContacts, setShowContacts] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        setLoading(true);
+        // Only show loading on initial fetch
+        if (initialLoad) {
+          setLoading(true);
+        }
         
         // Fetch Line contacts
         const lineResponse = await fetch('/api/line/contacts');
@@ -81,25 +85,61 @@ const NotificationPage: React.FC = () => {
           });
         
         setContacts(allContacts);
+        
+        // Update selected contact data if it exists in the new contacts
+        if (selectedContact) {
+          const updatedContact = allContacts.find(c => 
+            c.id === selectedContact.id && c.source === selectedContact.source
+          );
+          if (updatedContact) {
+            setSelectedContact(updatedContact);
+          }
+        }
+        
+        // Mark initial load as complete
+        if (initialLoad) {
+          setInitialLoad(false);
+        }
       } catch (error) {
         console.error('Error fetching contacts:', error);
       } finally {
-        setLoading(false);
+        if (initialLoad) {
+          setLoading(false);
+        }
       }
     };
 
     fetchContacts();
     
-    // Set up polling for new contacts
-    const intervalId = setInterval(fetchContacts, 30000); // Poll every 30 seconds
+    // Set up polling for new contacts every 3 seconds instead of 10
+    const intervalId = setInterval(fetchContacts, 3000);
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [selectedContact?.id]);
 
   const handleContactClick = (contact: Contact) => {
+    // Update selected contact and UI state
     setSelectedContact(contact);
     if (window.innerWidth < 768) {
       setShowContacts(false);
+    }
+    
+    // Reset unread count immediately in UI
+    if (contact.unreadCount > 0) {
+      // Update locally first for immediate UI feedback
+      setContacts(prev => prev.map(c => 
+        (c.id === contact.id && c.source === contact.source) 
+          ? {...c, unreadCount: 0} 
+          : c
+      ));
+      
+      // Then call API to persist the change
+      const endpoint = contact.source === 'line' 
+        ? `/api/line/contacts/${contact.id}/read`
+        : `/api/meta/contacts/${contact.id}/read`;
+        
+      fetch(endpoint, { method: 'POST' })
+        .catch(error => console.error(`Error resetting unread count:`, error));
     }
     
     // Fetch messages for the selected contact

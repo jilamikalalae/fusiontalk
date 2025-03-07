@@ -8,10 +8,10 @@ import { NewResponse } from '@/types/api-response';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { lineUserId: string } }
+  context: { params: { lineUserId: string } }
 ) {
   try {
-    const { lineUserId } = params;
+    const { lineUserId } = context.params;
     
     const session = await getServerSession(authOptions as AuthOptions);
     if (!session) {

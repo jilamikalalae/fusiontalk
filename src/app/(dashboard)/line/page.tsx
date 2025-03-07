@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -25,82 +25,141 @@ interface LineContact {
 }
 
 const LinePage: React.FC = () => {
-  const router = useRouter();
-  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const urlUserId = searchParams.get('userId');
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
   const [contacts, setContacts] = useState<LineContact[]>([]);
+  const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showContacts, setShowContacts] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const searchParams = useSearchParams();
+  const urlUserId = searchParams?.get('userId') || null;
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showContacts, setShowContacts] = useState(true);
-  const [fileInputRef] = useState<React.RefObject<HTMLInputElement> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const response = await fetch('/api/line/contacts');
-        const data = await response.json();
-        // Ensure data is an array, otherwise use empty array
-        setContacts(Array.isArray(data) ? data : []);
-        
-        // If we have a userId in the URL, find and select that contact
-        if (urlUserId && Array.isArray(data)) {
-          const contactFromUrl = data.find(contact => contact.userId === urlUserId);
-          if (contactFromUrl) {
-            setSelectedContact(contactFromUrl);
-            if (window.innerWidth < 768) {
-              setShowContacts(false);
+  // Function to fetch all contacts
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch('/api/line/contacts');
+      const data = await response.json();
+      
+      // Ensure data is an array, otherwise use empty array
+      const newContacts = Array.isArray(data) ? data : [];
+      
+      // Update contacts state
+      setContacts(newContacts);
+      
+      // If we have a userId in the URL, find and select that contact
+      if (urlUserId && Array.isArray(data)) {
+        const contactFromUrl = data.find(contact => contact.userId === urlUserId);
+        if (contactFromUrl) {
+          setSelectedContact(prev => {
+            // Only update if different to avoid unnecessary re-renders
+            if (!prev || prev.userId !== contactFromUrl.userId) {
+              return contactFromUrl;
             }
+            return prev;
+          });
+          
+          if (window.innerWidth < 768) {
+            setShowContacts(false);
           }
         }
-      } catch (error) {
-        console.error('Error fetching contacts:', error);
-        setContacts([]);
       }
-    };
-
-    fetchContacts(); 
-
-    const intervalId = setInterval(fetchContacts, 3000); // Poll every 3 seconds
-
-    return () => clearInterval(intervalId);
-  }, [urlUserId]); 
-
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!selectedContact) return;
       
-      try {
-        const response = await fetch(`/api/line/messages/${selectedContact.userId}`);
-        const data = await response.json();
-        // Transform the data to match the Message type
-        const transformedMessages = data.map((msg: any) => ({
-          id: msg._id.$oid,
-          content: msg.content,
-          messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
-          userId: selectedContact.userId,
-          replyTo: selectedContact.userId,
-          createdAt: msg.createdAt
-        }));
-        setMessages(transformedMessages);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        setMessages([]);
+      // If we have a selected contact, update its data from the new contacts
+      if (selectedContact) {
+        const updatedSelectedContact = newContacts.find(
+          contact => contact.userId === selectedContact.userId
+        );
+        
+        if (updatedSelectedContact) {
+          setSelectedContact(updatedSelectedContact);
+        }
       }
-    };
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    }
+  };
 
+  // Function to fetch messages for selected contact
+  const fetchMessages = async () => {
+    if (!selectedContact) return;
+    
+    try {
+      const response = await fetch(`/api/line/messages/${selectedContact.userId}`);
+      const data = await response.json();
+      
+      // Transform the data to match the Message type
+      const transformedMessages = data.map((msg: any) => ({
+        id: msg._id?.$oid || msg._id || `msg-${Date.now()}-${Math.random()}`,
+        content: msg.content,
+        messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
+        userId: selectedContact.userId,
+        replyTo: selectedContact.userId,
+        createdAt: msg.createdAt
+      }));
+      
+      setMessages(transformedMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setMessages([]);
+    }
+  };
+
+  // Handle contact click - mark as read and select
+  const handleContactClick = (contact: LineContact) => {
+    setSelectedContact(contact);
+    if (window.innerWidth < 768) {
+      setShowContacts(false);
+    }
+    
+    // Update URL with the selected contact's userId
+    router.push(`/line?userId=${contact.userId}`);
+    
+    // Reset unread count immediately in UI
+    if (contact.unreadCount && contact.unreadCount > 0) {
+      // Update locally first for immediate UI feedback
+      setContacts(prevContacts => 
+        prevContacts.map(c => 
+          c.userId === contact.userId ? {...c, unreadCount: 0} : c
+        )
+      );
+      
+      // Then call API to persist the change
+      fetch(`/api/line/contacts/${contact.userId}/read`, {
+        method: 'POST',
+      }).catch(error => {
+        console.error('Error resetting unread count:', error);
+      });
+    }
+  };
+
+  // Initial fetch and set up polling
+  useEffect(() => {
+    fetchContacts();
+    
+    // Poll for contacts regularly to detect new messages from any contact
+    const contactsIntervalId = setInterval(fetchContacts, 3000);
+    
+    return () => clearInterval(contactsIntervalId);
+  }, [urlUserId]);
+
+  // Fetch messages when selected contact changes
+  useEffect(() => {
+    if (!selectedContact) return;
+    
     fetchMessages();
-
-    const intervalId = setInterval(fetchMessages, 3000); // Poll every 3 seconds
-
-    return () => clearInterval(intervalId);
+    
+    // Poll for messages from the selected contact
+    const messagesIntervalId = setInterval(fetchMessages, 3000);
+    
+    return () => clearInterval(messagesIntervalId);
   }, [selectedContact]);
 
   useEffect(() => {
@@ -130,26 +189,8 @@ const LinePage: React.FC = () => {
   }, [selectedContact]);
 
   const filteredContacts = contacts?.filter(contact =>
-    contact?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
+    contact?.displayName?.toLowerCase().includes(searchParams?.get('searchQuery')?.toLowerCase() || '')
   ) || [];
-
-  const handleContactClick = (contact: LineContact) => {
-    setSelectedContact(contact);
-    if (window.innerWidth < 768) {
-      setShowContacts(false);
-    }
-    
-    // Reset unread count when clicking on a contact
-    if (contact.unreadCount && contact.unreadCount > 0) {
-      // You might want to add an API call here to reset the unread count on the server
-      // For now, we'll just update it locally
-      setContacts(prevContacts => 
-        prevContacts.map(c => 
-          c.userId === contact.userId ? {...c, unreadCount: 0} : c
-        )
-      );
-    }
-  };
 
   const handleBackToContacts = () => {
     setShowContacts(true);
@@ -210,18 +251,17 @@ const LinePage: React.FC = () => {
     
     // Create a temporary message with a local image preview
     const tempImageUrl = URL.createObjectURL(file);
-    const tempMessage = {
-      _id: `temp-${Date.now()}`,
-      senderId: 'me',
-      recipientId: selectedContact.userId,
-      senderName: 'You',
+    const tempMessage: Message = {
+      _id: { $oid: `temp-${Date.now()}` },
+      id: `temp-${Date.now()}`,
+      userId: selectedContact.userId,
+      userName: 'You',
       content: 'Sent an image',
-      messageType: MessageType.OUTGOING,
-      timestamp: new Date().toISOString(),
-      isRead: true,
+      messageType: 'bot',
+      createdAt: new Date().toISOString(),
       contentType: 'image',
       imageUrl: tempImageUrl
-    };
+    } as Message;
     
     setMessages((prev) => [tempMessage, ...prev]);
     
@@ -309,8 +349,14 @@ const LinePage: React.FC = () => {
                     type="search"
                     placeholder="Search contacts..."
                     className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchParams?.get('searchQuery') || ''}
+                    onChange={(e) => {
+                      if (searchParams) {
+                        const newParams = new URLSearchParams(searchParams.toString());
+                        newParams.set('searchQuery', e.target.value);
+                        router.push(`/line?${newParams.toString()}`);
+                      }
+                    }}
                   />
                 </div>
                 <ul className="space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">

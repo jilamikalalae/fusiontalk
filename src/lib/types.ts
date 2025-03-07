@@ -13,4 +13,6 @@ export interface Message {
   messageType: 'user' | 'bot' | string;
   replyTo?: string;
   platform?: 'line' | 'messenger';
+  contentType?: 'text' | 'image';
+  imageUrl?: string;
 }
