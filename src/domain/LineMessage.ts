@@ -8,7 +8,7 @@ export interface ILineContact {
   statusMessage: string;
   lastMessage: string;
   lastMessageAt: Date;
-  unreadCount: Number;
+  unreadCount: number;
   messages: ILineMessage[];
   createdAt: Date;
   updatedAt: Date;

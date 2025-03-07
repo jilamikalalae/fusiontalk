@@ -6,7 +6,7 @@ interface NotificationContextType {
   unreadCount: number;
   setUnreadCount: (count: number) => void;
   addUnreadMessage: () => void;
-  clearUnreadMessages: () => void;
+  clearUnreadMessages: (contactId: string, source?: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -18,7 +18,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setUnreadCount(prev => prev + 1);
   };
 
-  const clearUnreadMessages = () => {
+  const clearUnreadMessages = (contactId: string, source?: string) => {
+    // You can use contactId and source if needed for more specific logic
     setUnreadCount(0);
   };
 

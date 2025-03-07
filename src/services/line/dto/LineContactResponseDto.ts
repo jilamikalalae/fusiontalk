@@ -7,4 +7,5 @@ export interface LineContactResponseDto {
   createdAt: Date;
   lastMessage: string;
   lastMessageAt: Date;
+  unreadCount: number;
 }

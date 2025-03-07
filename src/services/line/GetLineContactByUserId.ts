@@ -33,7 +33,8 @@ export class GetLineContactByUserId {
           updatedAt: lineContact.updatedAt,
           createdAt: lineContact.createdAt,
           lastMessage: lineContact.lastMessage,
-          lastMessageAt: lineContact.lastMessageAt
+          lastMessageAt: lineContact.lastMessageAt,
+          unreadCount: lineContact.unreadCount || 0
         });
       }
 

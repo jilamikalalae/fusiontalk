@@ -31,11 +31,11 @@ export interface Source {
 }
 
 export interface LineProfileResponse {
-  userId: string;
   displayName: string;
+  userId: string;
   pictureUrl: string;
-  language: string;
   statusMessage: string;
+  language?: string;
 }
 
 export interface LineSendPushMessageRequest {

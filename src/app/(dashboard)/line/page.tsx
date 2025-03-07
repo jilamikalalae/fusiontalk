@@ -19,6 +19,7 @@ interface LineContact {
   statusMessage: string;
   lastMessage: string;
   lastMessageAt: Date;
+  unreadCount: number;
 }
 
 const LinePage: React.FC = () => {
@@ -130,6 +131,17 @@ const LinePage: React.FC = () => {
     if (window.innerWidth < 768) {
       setShowContacts(false);
     }
+    
+    // Reset unread count when clicking on a contact
+    if (contact.unreadCount && contact.unreadCount > 0) {
+      // You might want to add an API call here to reset the unread count on the server
+      // For now, we'll just update it locally
+      setContacts(prevContacts => 
+        prevContacts.map(c => 
+          c.userId === contact.userId ? {...c, unreadCount: 0} : c
+        )
+      );
+    }
   };
 
   const handleBackToContacts = () => {
@@ -221,16 +233,24 @@ const LinePage: React.FC = () => {
                   {filteredContacts.map((contact) => (
                     <li
                       key={contact.userId}
-                      className="flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer ${
+                        contact.unreadCount > 0 
+                          ? 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500' 
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      } ${selectedContact?.userId === contact.userId ? 'ring-2 ring-blue-500' : ''}`}
                       onClick={() => handleContactClick(contact)}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                           <img
                             src={contact.pictureUrl || 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'}
                             alt={`${contact.displayName}'s profile`}
                             className="w-full h-full object-cover"
-                          
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
+                              target.onerror = null;
+                            }}
                           />
                         </div>
                         <div className="min-w-0">
@@ -238,11 +258,18 @@ const LinePage: React.FC = () => {
                           <p className="text-sm text-gray-500 truncate">{contact.lastMessage}</p>
                         </div>
                       </div>
-                      {contact.lastMessageAt && (
-                        <p className="text-xs text-gray-400 ml-2 flex-shrink-0">
-                          {new Date(contact.lastMessageAt).toLocaleDateString()} {new Date(contact.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      )}
+                      <div className="flex flex-col items-end ml-2">
+                        {contact.lastMessageAt && (
+                          <p className="text-xs text-gray-400 flex-shrink-0">
+                            {new Date(contact.lastMessageAt).toLocaleDateString()} {new Date(contact.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
+                        {contact.unreadCount > 0 && (
+                          <div className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 mt-1">
+                            {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

@@ -249,72 +249,77 @@ const NotificationPage: React.FC = () => {
                   <li 
                     key={`${contact.source}-${contact.id}`}
                     onClick={() => handleContactClick(contact)}
-                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
                       contact.unreadCount > 0 
                         ? 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500' 
                         : 'bg-gray-50 hover:bg-gray-100'
                     } ${selectedContact?.id === contact.id ? 'ring-2 ring-blue-500' : ''}`}
                   >
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                        <img 
-                          src={contact.pictureUrl || 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'} 
-                          alt={`${contact.displayName}'s profile`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
-                            target.onerror = null;
-                          }}
-                        />
-                      </div>
-                      <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${
-                        contact.source === 'line' ? 'bg-green-500' : 'bg-blue-600'
-                      } flex items-center justify-center`}>
-                        {contact.source === 'line' ? (
+                    <div className="flex items-center">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                           <img 
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" 
-                            alt="Line" 
-                            className="w-3 h-3"
+                            src={contact.pictureUrl || 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'} 
+                            alt={`${contact.displayName}'s profile`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
+                              target.onerror = null;
+                            }}
                           />
-                        ) : (
-                          <img 
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png" 
-                            alt="Messenger" 
-                            className="w-3 h-3"
-                          />
-                        )}
+                        </div>
+                        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${
+                          contact.source === 'line' ? 'bg-green-500' : 'bg-blue-600'
+                        } flex items-center justify-center`}>
+                          {contact.source === 'line' ? (
+                            <img 
+                              src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png" 
+                              alt="Line" 
+                              className="w-3 h-3"
+                            />
+                          ) : (
+                            <img 
+                              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png" 
+                              alt="Messenger" 
+                              className="w-3 h-3"
+                            />
+                          )}
+                        </div>
                       </div>
                       
-                      {contact.unreadCount > 0 && (
-                        <div className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1">
-                          {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
+                      <div className="ml-4 flex-1 min-w-0">
+                        <div className="flex justify-between">
+                          <h3 className="font-medium truncate">{contact.displayName}</h3>
                         </div>
-                      )}
+                        
+                        {contact.statusMessage && (
+                          <p className="text-xs text-gray-400 truncate">{contact.statusMessage}</p>
+                        )}
+                        
+                        {contact.lastMessage && (
+                          <p className="text-sm text-gray-600 truncate">{contact.lastMessage}</p>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="ml-4 flex-1">
-                      <div className="flex justify-between">
-                        <h3 className="font-medium">{contact.displayName}</h3>
-                        {contact.lastMessageAt && (
-                          <span className="text-xs text-gray-500">
-                            {new Date(contact.lastMessageAt).toLocaleString('en-US', {
-                              hour: 'numeric',
-                              minute: 'numeric',
-                              hour12: true,
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {contact.statusMessage && (
-                        <p className="text-xs text-gray-400 truncate">{contact.statusMessage}</p>
+                    <div className="flex flex-col items-end ml-2">
+                      {contact.lastMessageAt && (
+                        <span className="text-xs text-gray-500">
+                          {new Date(contact.lastMessageAt).toLocaleString('en-US', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true,
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
                       )}
                       
-                      {contact.lastMessage && (
-                        <p className="text-sm text-gray-600 truncate">{contact.lastMessage}</p>
+                      {contact.unreadCount > 0 && (
+                        <div className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 mt-1">
+                          {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
+                        </div>
                       )}
                     </div>
                   </li>
