@@ -136,13 +136,7 @@ function MobileNav() {
           Access your messaging platforms and account settings.
         </SheetDescription>
         <nav className="grid gap-6 text-lg font-medium mt-6">
-          <div className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base">
-            <Link href="/" className="block">
-              <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-              <span className="sr-only">FusionTalk</span>
-            </Link>
-          </div>
-          
+
           <Link
             href="/notification"
             className={`flex items-center gap-4 px-2.5 py-2 rounded-md ${
