@@ -15,7 +15,9 @@ export async function storeMessengerMessage(messageData) {
       content: messageData.content,
       messageId: messageData.messageId,
       timestamp: messageData.timestamp || new Date(),
-      isRead: messageData.isRead || false
+      isRead: messageData.isRead || false,
+      contentType: messageData.contentType || 'text',
+      imageUrl: messageData.imageUrl || null
     });
 
     console.log('Storing message:', newMessage);

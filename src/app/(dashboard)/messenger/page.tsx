@@ -11,6 +11,8 @@ import {
 import { MessageType } from '@/enum/enum';
 import Modal from '@/components/account/modal';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { format } from 'date-fns';
 
 interface Participant {
   userId: string;
@@ -28,6 +30,8 @@ interface Message {
   messageType: MessageType;
   timestamp: string;
   isRead: boolean;
+  contentType?: string;
+  imageUrl?: string;
 }
 
 interface NewMessage {
@@ -66,6 +70,9 @@ const MessengerPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [showContacts, setShowContacts] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   // Check Messenger connection first
   useEffect(() => {
@@ -248,6 +255,86 @@ const MessengerPage: React.FC = () => {
       .includes(searchQuery.toLowerCase())
   );
 
+  const handleImageSelect = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !selectedContact) return;
+    
+    const file = e.target.files[0];
+    
+    // Create a temporary message with a local image preview
+    const tempImageUrl = URL.createObjectURL(file);
+    const tempMessage = {
+      _id: `temp-${Date.now()}`,
+      senderId: 'me',
+      recipientId: selectedContact.userId,
+      senderName: 'You',
+      content: 'Sent an image',
+      messageType: MessageType.OUTGOING,
+      timestamp: new Date().toISOString(),
+      isRead: true,
+      contentType: 'image',
+      imageUrl: tempImageUrl
+    };
+    
+    setMessages((prev) => [tempMessage, ...prev]);
+    
+    // Create form data for the upload
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('recipientId', selectedContact.userId);
+    formData.append('content', 'Sent an image');
+    
+    try {
+      const response = await fetch('/api/meta/messages', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send image');
+      }
+      
+      // Fetch updated messages
+      const messagesResponse = await fetch(
+        `/api/meta/messages/${selectedContact.userId}`
+      );
+      if (!messagesResponse.ok) {
+        throw new Error('Failed to fetch updated messages');
+      }
+      
+      const updatedMessages = await messagesResponse.json();
+      setMessages(updatedMessages);
+    } catch (error) {
+      console.error('Error sending image:', error);
+      setErrorMessage(
+        'Failed to send image. Your token might have expired. Please try reconnecting your Messenger account.'
+      );
+      setIsErrorModalOpen(true);
+      // Remove the temporary message if send failed
+      setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
+    }
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedImage(null);
+  };
+
   return (
     <>
       <Modal
@@ -400,34 +487,35 @@ const MessengerPage: React.FC = () => {
                         messages.map((msg) => (
                           <div
                             key={msg._id}
-                            className={`flex ${msg.messageType === MessageType.OUTGOING ? 'justify-end' : 'justify-start'} mb-1`}
+                            className={`flex ${msg.messageType === MessageType.OUTGOING ? 'justify-end' : 'justify-start'} mb-4`}
                           >
                             <div
                               className={`max-w-[75%] p-3 rounded-lg ${
                                 msg.messageType === MessageType.OUTGOING
                                   ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-200'
+                                  : 'bg-gray-200 text-gray-800'
                               }`}
                             >
-                              <p className="break-words">{msg.content}</p>
+                              {msg.contentType === 'image' ? (
+                                <div 
+                                  className="cursor-pointer" 
+                                  onClick={() => handleImageClick(msg.imageUrl!)}
+                                >
+                                  <img
+                                    src={msg.imageUrl}
+                                    alt="Message attachment"
+                                    className="rounded-md max-w-full max-h-60 object-contain"
+                                  />
+                                </div>
+                              ) : (
+                                <p className="break-words">{msg.content}</p>
+                              )}
                               <div
                                 className={`text-xs mt-1 ${
-                                  msg.messageType === MessageType.OUTGOING
-                                    ? 'text-white/80'
-                                    : 'text-gray-500'
+                                  msg.messageType === MessageType.OUTGOING ? 'text-white/80' : 'text-gray-500'
                                 }`}
                               >
-                                {new Date(msg.timestamp).toLocaleString(
-                                  'en-US',
-                                  {
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    hour12: true,
-                                    month: 'numeric',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  }
-                                )}
+                                {format(new Date(msg.timestamp), 'h:mm a')}
                               </div>
                             </div>
                           </div>
@@ -454,6 +542,27 @@ const MessengerPage: React.FC = () => {
                           }
                         }}
                       />
+                      
+                      {/* Hidden file input */}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                      />
+                      
+                      {/* Image upload button */}
+                      <button
+                        className="p-2 text-blue-500 hover:text-blue-700"
+                        onClick={handleImageSelect}
+                        title="Upload image"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      
                       <button
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         onClick={handleSendMessage}
@@ -492,6 +601,28 @@ const MessengerPage: React.FC = () => {
             </div>
           </div>
         )
+      )}
+      {isImageModalOpen && selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={closeImageModal}
+        >
+          <div className="relative max-w-4xl max-h-screen p-4">
+            <button 
+              className="absolute top-2 right-2 bg-white rounded-full p-2 text-black"
+              onClick={closeImageModal}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Enlarged message attachment" 
+              className="max-w-full max-h-[90vh] object-contain"
+            />
+          </div>
+        </div>
       )}
     </>
   );

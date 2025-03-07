@@ -9,7 +9,9 @@ const LineMessageSchema = new Schema<ILineMessage>({
     required: true
   },
   content: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  contentType: { type: String, enum: ['text', 'image'], default: 'text' },
+  imageUrl: { type: String }
 });
 
 const LineContactSchema = new Schema<ILineContact>({

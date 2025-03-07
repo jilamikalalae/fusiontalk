@@ -14,7 +14,9 @@ const messengerMessageSchema = new Schema<IMessengerMessage>({
   content: { type: String, required: true },
   messageId: String,
   timestamp: { type: Date, default: Date.now },
-  isRead: { type: Boolean, default: false }
+  isRead: { type: Boolean, default: false },
+  contentType: { type: String, enum: ['text', 'image'], default: 'text' },
+  imageUrl: { type: String }
 });
 
 const MessengerMessage =

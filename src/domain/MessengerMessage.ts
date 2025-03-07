@@ -9,4 +9,6 @@ export interface IMessengerMessage {
   messageId: string;
   timestamp: Date;
   isRead: boolean;
+  contentType?: 'text' | 'image';
+  imageUrl?: string;
 }
