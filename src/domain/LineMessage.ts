@@ -15,7 +15,9 @@ export interface ILineContact {
 }
 
 export interface ILineMessage {
-  messageType: MessageType;
+  messageType: string;
   content: string;
   createdAt: Date;
+  contentType?: 'text' | 'image';
+  imageUrl?: string;
 }

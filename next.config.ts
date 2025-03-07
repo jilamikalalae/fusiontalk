@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.public.blob.vercel-storage.com'
+      },
+      {
+        protocol: 'https',
+        hostname: '*.amazonaws.com'  // Allow S3 images
+      },
+      {
+        protocol: 'https',
+        hostname: '*.s3.amazonaws.com'  // Alternative S3 domain pattern
       }
     ]
   },

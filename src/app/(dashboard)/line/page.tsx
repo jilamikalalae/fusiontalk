@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Message } from "@/lib/types";
 import Modal from "@/components/account/modal";
+import { MessageType } from "@/enum/enum";
+import { format } from 'date-fns';
 
 // Add new interface for Line Contact
 interface LineContact {
@@ -33,6 +35,11 @@ const LinePage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showContacts, setShowContacts] = useState(true);
+  const [fileInputRef] = useState<React.RefObject<HTMLInputElement> | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -183,6 +190,83 @@ const LinePage: React.FC = () => {
     router.push('/account');
   };
 
+  // Add this function to handle image uploads for LINE
+  const handleLineImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !selectedContact) return;
+    
+    const file = e.target.files[0];
+    
+    // Create a temporary message with a local image preview
+    const tempImageUrl = URL.createObjectURL(file);
+    const tempMessage = {
+      _id: `temp-${Date.now()}`,
+      senderId: 'me',
+      recipientId: selectedContact.userId,
+      senderName: 'You',
+      content: 'Sent an image',
+      messageType: MessageType.OUTGOING,
+      timestamp: new Date().toISOString(),
+      isRead: true,
+      contentType: 'image',
+      imageUrl: tempImageUrl
+    };
+    
+    setMessages((prev) => [tempMessage, ...prev]);
+    
+    // Create form data for the upload
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('recipientId', selectedContact.userId);
+    formData.append('content', 'Sent an image');
+    
+    try {
+      const response = await fetch('/api/line/messages', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send image');
+      }
+      
+      // Fetch updated messages
+      const messagesResponse = await fetch(
+        `/api/line/messages/${selectedContact.userId}`
+      );
+      if (!messagesResponse.ok) {
+        throw new Error('Failed to fetch updated messages');
+      }
+      
+      const updatedMessages = await messagesResponse.json();
+      setMessages(updatedMessages);
+    } catch (error) {
+      console.error('Error sending image:', error);
+      setErrorMessage(
+        'Failed to send image. Your token might have expired. Please try reconnecting your LINE account.'
+      );
+      setIsErrorModalOpen(true);
+      // Remove the temporary message if send failed
+      setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
+    }
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Add this function to handle image clicks
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+  
+  // Add this function to close the modal
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedImage(null);
+  };
+
   return (
     <>
       <Modal
@@ -312,18 +396,24 @@ const LinePage: React.FC = () => {
                                 msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
                               }`}
                             >
-                              <p className="break-words">{msg.content}</p>
+                              {msg.contentType === 'image' && msg.imageUrl ? (
+                                <div 
+                                  className="cursor-pointer" 
+                                  onClick={() => handleImageClick(msg.imageUrl!)}
+                                >
+                                  <img
+                                    src={msg.imageUrl}
+                                    alt="Message attachment"
+                                    className="rounded-md max-w-full max-h-60 object-contain"
+                                  />
+                                </div>
+                              ) : (
+                                <p className="break-words">{msg.content}</p>
+                              )}
                               <div className={`text-xs mt-1 ${
                                 msg.messageType === 'bot' ? "text-white/80" : "text-gray-500"
                               }`}>
-                                {new Date(msg.createdAt).toLocaleString('en-US', {
-                                  hour: 'numeric',
-                                  minute: 'numeric',
-                                  hour12: true,
-                                  month: 'numeric',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                })}
+                                {format(new Date(msg.createdAt), 'h:mm a')}
                               </div>
                             </div>
                           </div>
@@ -369,6 +459,30 @@ const LinePage: React.FC = () => {
                 </div>
               )}
             </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {isImageModalOpen && selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={closeImageModal}
+        >
+          <div className="relative max-w-4xl max-h-screen p-4">
+            <button 
+              className="absolute top-2 right-2 bg-white rounded-full p-2 text-black"
+              onClick={closeImageModal}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Enlarged message attachment" 
+              className="max-w-full max-h-[90vh] object-contain"
+            />
           </div>
         </div>
       )}

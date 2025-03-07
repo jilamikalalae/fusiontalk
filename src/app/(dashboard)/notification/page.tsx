@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import Image from 'next/image';
+import { format } from 'date-fns';
 
 interface Contact {
   id: string;
@@ -30,6 +32,8 @@ const NotificationPage: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showContacts, setShowContacts] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -121,7 +125,9 @@ const NotificationPage: React.FC = () => {
         messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
         userId: contact.id,
         replyTo: contact.id,
-        createdAt: msg.createdAt || new Date().toISOString()
+        createdAt: msg.createdAt || new Date().toISOString(),
+        contentType: msg.contentType || 'text',
+        imageUrl: msg.imageUrl || undefined
       }));
       
       setMessages(transformedMessages);
@@ -196,6 +202,16 @@ const NotificationPage: React.FC = () => {
       setShowContacts(false);
     }
   }, [selectedContact]);
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedImage(null);
+  };
 
   const filteredContacts = contacts
     .filter(contact => 
@@ -397,30 +413,40 @@ const NotificationPage: React.FC = () => {
                 {messages.length > 0 ? (
                   messages
                     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .map((msg) => (
+                    .map((message) => (
                       <div
-                        key={msg.id}
+                        key={message.id}
                         className={`flex ${
-                          msg.messageType === 'bot' ? "justify-end" : "justify-start"
-                        } mb-1`}
+                          message.messageType === 'bot' ? "justify-end" : "justify-start"
+                        } mb-4`}
                       >
                         <div
                           className={`max-w-[75%] p-3 rounded-lg ${
-                            msg.messageType === 'bot' ? "bg-blue-500 text-white" : "bg-gray-200"
+                            message.messageType === 'bot'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-200 text-gray-800'
                           }`}
                         >
-                          <p className="break-words">{msg.content}</p>
-                          <div className={`text-xs mt-1 ${
-                            msg.messageType === 'bot' ? "text-white/80" : "text-gray-500"
-                          }`}>
-                            {new Date(msg.createdAt).toLocaleString('en-US', {
-                              hour: 'numeric',
-                              minute: 'numeric',
-                              hour12: true,
-                              month: 'numeric',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
+                          {message.contentType === 'image' && message.imageUrl ? (
+                            <div 
+                              className="cursor-pointer" 
+                              onClick={() => handleImageClick(message.imageUrl!)}
+                            >
+                              <img
+                                src={message.imageUrl}
+                                alt="Message attachment"
+                                className="rounded-md max-w-full max-h-60 object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <p className="break-words">{message.content}</p>
+                          )}
+                          <div
+                            className={`text-xs mt-1 ${
+                              message.messageType === 'bot' ? 'text-white/80' : 'text-gray-500'
+                            }`}
+                          >
+                            {new Date(message.createdAt).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -467,6 +493,30 @@ const NotificationPage: React.FC = () => {
           )}
         </Card>
       </div>
+
+      {/* Image Modal */}
+      {isImageModalOpen && selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={closeImageModal}
+        >
+          <div className="relative max-w-4xl max-h-screen p-4">
+            <button 
+              className="absolute top-2 right-2 bg-white rounded-full p-2 text-black"
+              onClick={closeImageModal}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Enlarged message attachment" 
+              className="max-w-full max-h-[90vh] object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
