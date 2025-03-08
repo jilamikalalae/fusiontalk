@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     
     let messageData;
     let imageBuffer;
-    let imageFileName;
+    let imageFileName = '';
     let imageUrl = '';
     let requestBody;
     
