@@ -7,10 +7,11 @@ export interface Message {
   userName: string;
   content: string;
   createdAt: string;
+  messageType: 'user' | 'bot' | string;
+  contentType?: 'image' | 'text';
+  imageUrl?: string;
+  replyTo?: string;
   isUnread?: boolean;
   pictureUrl?: string;
   displayName?: string;
-  messageType: 'user' | 'bot' | string;
-  replyTo?: string;
-  platform?: 'line' | 'messenger';
 }

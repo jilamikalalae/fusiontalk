@@ -9,6 +9,9 @@ import { NewResponse } from '@/types/api-response';
 import { NextRequest } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
+// At the top, add type definition
+type ContentType = 'image' | 'text' | undefined;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -59,7 +62,7 @@ export async function POST(req: NextRequest) {
 
       // Process message content
       let messageContent = '';
-      let contentType = 'text';
+      let contentType: ContentType = 'text';
       let imageUrl = '';
 
       if (event.message.type === 'text') {

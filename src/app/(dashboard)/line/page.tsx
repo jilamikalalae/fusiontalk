@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -36,7 +36,7 @@ const LinePage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showContacts, setShowContacts] = useState(true);
-  const [fileInputRef] = useState<React.RefObject<HTMLInputElement> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -164,12 +164,12 @@ const LinePage: React.FC = () => {
         $oid: `temp-${Date.now()}`
       },
       id: `temp-${Date.now()}`,
-      content: inputMessage,
-      messageType: 'bot',
       userId: selectedContact.userId,
-      replyTo: selectedContact.userId,
+      userName: 'You',
+      content: inputMessage,
       createdAt: new Date().toISOString(),
-      userName: 'You'
+      messageType: 'bot',
+      contentType: 'text',
     };
 
     setMessages(prev => [tempMessage, ...prev]);
@@ -210,15 +210,14 @@ const LinePage: React.FC = () => {
     
     // Create a temporary message with a local image preview
     const tempImageUrl = URL.createObjectURL(file);
-    const tempMessage = {
-      _id: `temp-${Date.now()}`,
-      senderId: 'me',
-      recipientId: selectedContact.userId,
-      senderName: 'You',
+    const tempMessage: Message = {
+      _id: { $oid: `temp-${Date.now()}` },
+      id: `temp-${Date.now()}`,
+      userId: selectedContact.userId,
+      userName: 'You',
       content: 'Sent an image',
-      messageType: MessageType.OUTGOING,
-      timestamp: new Date().toISOString(),
-      isRead: true,
+      createdAt: new Date().toISOString(),
+      messageType: 'bot',
       contentType: 'image',
       imageUrl: tempImageUrl
     };

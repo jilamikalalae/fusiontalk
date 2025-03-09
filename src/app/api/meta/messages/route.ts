@@ -91,6 +91,11 @@ export async function POST(req: Request) {
     
     if (messageData.contentType === 'image' && imageBuffer) {
       try {
+        // Add null check before using imageFileName
+        if (!imageFileName) {
+          throw new Error('Image filename is required');
+        }
+
         // Upload image to S3
         imageUrl = await uploadToS3(
           imageBuffer,

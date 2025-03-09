@@ -142,11 +142,20 @@ export async function POST(req: Request) {
       existingContact.updatedAt = new Date();
       existingContact.messages.push({
         messageType: MessageType.OUTGOING,
-        content: messageContent,
+        content: messageContent || 'Message content unavailable', // Provide a fallback
         createdAt: new Date(),
         contentType: messageData.contentType || 'text',
         imageUrl: imageUrl || undefined
       });
+      
+      // Before saving, ensure all messages have content
+      if (existingContact.messages) {
+        for (let i = 0; i < existingContact.messages.length; i++) {
+          if (!existingContact.messages[i].content) {
+            existingContact.messages[i].content = 'Message content unavailable';
+          }
+        }
+      }
       
       await existingContact.save();
     } else {
