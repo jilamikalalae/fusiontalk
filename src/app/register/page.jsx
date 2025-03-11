@@ -1,8 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-import bg1 from '@/app/login/bg1.webp';
 import React, { FormEvent, useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { redirect } from 'next/navigation';
@@ -72,25 +70,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
-      {/* Left side: Background image */}
-      <div className="relative">
-        <Image src={bg1} alt="Background Image" fill className="object-cover" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white shadow-xl rounded-xl p-8 border border-gray-200">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Create an account</h1>
+            <p className="text-gray-600 mt-2">Join FusionTalk to connect with your customers</p>
+          </div>
 
-      {/* Right side: Form */}
-      <div className="flex items-center justify-center p-8">
-        <div className="w-full max-w-md bg-white shadow-md rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-center mb-6">
-            Create an account
-          </h1>
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {/* Full Name */}
             <div>
               <label
                 htmlFor="full-name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Full Name
               </label>
@@ -100,7 +93,7 @@ export default function RegisterPage() {
                 placeholder="Enter your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 required
               />
             </div>
@@ -109,7 +102,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Email Address
               </label>
@@ -119,7 +112,7 @@ export default function RegisterPage() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 required
               />
             </div>
@@ -128,7 +121,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Password
               </label>
@@ -138,7 +131,7 @@ export default function RegisterPage() {
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 required
               />
             </div>
@@ -147,7 +140,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="confirm-password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Confirm Password
               </label>
@@ -157,41 +150,43 @@ export default function RegisterPage() {
                 placeholder="Confirm your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 required
               />
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-500 text-white text-sm py-2 px-4 rounded-md">
-                {error}
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md">
+                <p>{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="bg-green-500 text-white text-sm py-2 px-4 rounded-md">
-                {success}
+              <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-md">
+                <p>{success}</p>
               </div>
             )}
 
             {/* Submit Button */}
             <LoadingButton
               type="submit"
-              className="w-full bg-blue-500 text-white hover:bg-blue-600"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
               isLoading={isLoading}
               loadingText="Creating account..."
             >
-              Sign Up
+              Create Account
             </LoadingButton>
           </form>
 
           {/* Login Redirect */}
-          <div className="text-center mt-6 text-sm">
-            Already have an account?{' '}
-            <a href="/login" className="text-blue-500">
-              Log in
-            </a>
+          <div className="text-center mt-6 pt-6 border-t border-gray-200">
+            <p className="text-gray-600">
+              Already have an account?{' '}
+              <a href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
+                Sign in
+              </a>
+            </p>
           </div>
         </div>
       </div>

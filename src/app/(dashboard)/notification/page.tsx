@@ -25,7 +25,6 @@ const NotificationPage: React.FC = () => {
   const router = useRouter();
   const { clearUnreadMessages } = useNotifications();
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'line' | 'messenger'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -34,16 +33,10 @@ const NotificationPage: React.FC = () => {
   const [showContacts, setShowContacts] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        // Only show loading on initial fetch
-        if (initialLoad) {
-          setLoading(true);
-        }
-        
         // Fetch Line contacts
         const lineResponse = await fetch('/api/line/contacts');
         const lineData = await lineResponse.json();
@@ -95,27 +88,31 @@ const NotificationPage: React.FC = () => {
             setSelectedContact(updatedContact);
           }
         }
-        
-        // Mark initial load as complete
-        if (initialLoad) {
-          setInitialLoad(false);
-        }
       } catch (error) {
         console.error('Error fetching contacts:', error);
-      } finally {
-        if (initialLoad) {
-          setLoading(false);
-        }
       }
     };
 
+    // Initial fetch
     fetchContacts();
     
-    // Set up polling for new contacts every 3 seconds instead of 10
+    // Set up polling for new contacts silently in the background
     const intervalId = setInterval(fetchContacts, 3000);
     
     return () => clearInterval(intervalId);
-  }, [selectedContact?.id]);
+  }, []);
+
+  // Add a separate effect to update the selected contact when contacts change
+  useEffect(() => {
+    if (selectedContact && contacts.length > 0) {
+      const updatedContact = contacts.find(c => 
+        c.id === selectedContact.id && c.source === selectedContact.source
+      );
+      if (updatedContact) {
+        setSelectedContact(updatedContact);
+      }
+    }
+  }, [contacts, selectedContact?.id]);
 
   const handleContactClick = (contact: Contact) => {
     // Update selected contact and UI state
@@ -295,11 +292,7 @@ const NotificationPage: React.FC = () => {
           </CardHeader>
           
           <CardContent className="overflow-y-auto max-h-[calc(100vh-220px)]">
-            {loading ? (
-              <div className="flex justify-center p-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-              </div>
-            ) : filteredContacts.length > 0 ? (
+            {filteredContacts.length > 0 ? (
               <ul className="space-y-3">
                 {filteredContacts.map((contact) => (
                   <li 
