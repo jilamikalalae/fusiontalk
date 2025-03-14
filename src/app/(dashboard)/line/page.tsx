@@ -1,7 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -26,7 +24,8 @@ interface LineContact {
   unreadCount: number;
 }
 
-const LinePage: React.FC = () => {
+// Create a client component that uses useSearchParams
+function LinePageContent() {
   const [contacts, setContacts] = useState<LineContact[]>([]);
   const [selectedContact, setSelectedContact] = useState<LineContact | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -38,8 +37,6 @@ const LinePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showContacts, setShowContacts] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
@@ -106,7 +103,9 @@ const LinePage: React.FC = () => {
         messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
         userId: selectedContact.userId,
         replyTo: selectedContact.userId,
-        createdAt: msg.createdAt
+        createdAt: msg.createdAt,
+        contentType: msg.contentType,
+        imageUrl: msg.imageUrl
       }));
       
       setMessages(transformedMessages);
@@ -166,63 +165,37 @@ const LinePage: React.FC = () => {
     return () => clearInterval(messagesIntervalId);
   }, [selectedContact]);
 
-  useEffect(() => {
-    const checkLineConnection = async () => {
-      try {
-        const response = await fetch('/api/users/v2');
-        const userData = await response.json();
-        
-        if (!userData.isLineConnected) {
-          setIsModalOpen(true);
-          return;
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error checking LINE connection:', error);
-      }
-    };
-
-    checkLineConnection();
-  }, []);
-
-  // On mobile, when a contact is selected, hide the contacts list
-  useEffect(() => {
-    if (selectedContact && window.innerWidth < 768) {
-      setShowContacts(false);
-    }
-  }, [selectedContact]);
-
-  const filteredContacts = contacts?.filter(contact =>
-    contact?.displayName?.toLowerCase().includes(searchParams?.get('searchQuery')?.toLowerCase() || '')
-  ) || [];
-
+  // Handle back button on mobile
   const handleBackToContacts = () => {
     setShowContacts(true);
   };
 
+  // Handle sending a message
   const handleSendMessage = async () => {
     if (!selectedContact || !inputMessage.trim()) return;
 
-    // Create temporary message with matching ID structure
+    // Create temporary message with all required properties
     const tempMessage: Message = {
-      _id: {
-        $oid: `temp-${Date.now()}`
-      },
+      _id: { $oid: `temp-${Date.now()}` },
       id: `temp-${Date.now()}`,
-      userId: selectedContact.userId,
-      userName: 'You',
       content: inputMessage,
-      createdAt: new Date().toISOString(),
       messageType: 'bot',
-      contentType: 'text',
-    };
+      userId: selectedContact.userId,
+      userName: 'You', // Add the missing userName property
+      replyTo: selectedContact.userId,
+      createdAt: new Date().toISOString()
+    } as Message;
 
+    // Add to messages immediately for UI responsiveness
     setMessages(prev => [tempMessage, ...prev]);
+
+    // Clear input
     setInputMessage('');
 
+    // Prepare message data for API
     const messageData = {
       content: inputMessage,
-      incomingLineId: selectedContact.userId
+      recipientId: selectedContact.userId
     };
 
     try {
@@ -235,41 +208,43 @@ const LinePage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error sending message:', errorData);
+        throw new Error('Failed to send message');
       }
+
+      // Fetch updated messages
+      fetchMessages();
     } catch (error) {
       console.error('Error sending message:', error);
+      setErrorMessage(
+        'Failed to send message. Your token might have expired. Please try reconnecting your LINE account.'
+      );
+      setIsErrorModalOpen(true);
+      // Remove the temporary message if send failed
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
     }
   };
 
-  const handleModalConfirm = () => {
-    router.push('/account');
+  // Handle file selection for image upload
+  const handleFileSelect = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
-  // Add this function to handle image uploads for LINE
-  const handleLineImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0] || !selectedContact) return;
+  // Handle file change for image upload
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedContact) return;
     
-    const file = e.target.files[0];
-    
-    // Create a temporary message with a local image preview
+    // Create a temporary URL for the image
     const tempImageUrl = URL.createObjectURL(file);
     const tempMessage: Message = {
-      _id: { $oid: `temp-${Date.now()}` },
-      id: `temp-${Date.now()}`,
-      userId: selectedContact.userId,
-      userName: 'You',
-    const tempMessage: Message = {
-      _id: { $oid: `temp-${Date.now()}` },
       id: `temp-${Date.now()}`,
       userId: selectedContact.userId,
       userName: 'You',
       content: 'Sent an image',
       createdAt: new Date().toISOString(),
       messageType: 'bot',
-      messageType: 'bot',
-      createdAt: new Date().toISOString(),
       contentType: 'image',
       imageUrl: tempImageUrl
     } as Message;
@@ -309,7 +284,7 @@ const LinePage: React.FC = () => {
       );
       setIsErrorModalOpen(true);
       // Remove the temporary message if send failed
-      setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
     }
     
     // Reset the file input
@@ -332,59 +307,58 @@ const LinePage: React.FC = () => {
 
   return (
     <>
-      <Modal
-        isOpen={isModalOpen}
-        title="Line Connection Required"
-        message="Please connect your LINE account to access the chat features. Would you like to go to the account settings page?"
-        confirmText="Go to Settings"
-        onConfirm={handleModalConfirm}
-      />
+      {isErrorModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Error</h3>
+            <p className="mb-6">{errorMessage}</p>
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                onClick={() => setIsErrorModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {loading ? (
         <div className="flex items-center justify-center h-screen">
-          <div>Loading...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : (
-        <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-          {/* Sidebar - Full width on mobile when showing contacts */}
-          <div className={`${
-            showContacts ? 'block' : 'hidden'
-          } md:block w-full md:w-1/3 lg:w-1/4 bg-white border-r h-screen md:h-auto`}>
+        <div className="flex flex-col md:flex-row h-screen md:h-[calc(100vh-2rem)] md:mx-4 md:my-4">
+          {/* Contacts List - Hidden on mobile when a contact is selected */}
+          <div 
+            className={`${
+              showContacts ? 'block' : 'hidden'
+            } md:block w-full md:w-1/3 lg:w-1/4 border-r md:border-r-0 md:mr-4`}
+          >
             <Card className="h-full border-0 md:border rounded-none md:rounded-lg">
-              <CardHeader className="p-4">
-                <CardTitle className="text-xl">Inbox</CardTitle>
-                <CardDescription>Newest ↑</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle>LINE Contacts</CardTitle>
+                <CardDescription>
+                  Your LINE contacts will appear here
+                </CardDescription>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="mb-4">
-                  <input
-                    type="search"
-                    placeholder="Search contacts..."
-                    className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                    value={searchParams?.get('searchQuery') || ''}
-                    onChange={(e) => {
-                      if (searchParams) {
-                        const newParams = new URLSearchParams(searchParams.toString());
-                        newParams.set('searchQuery', e.target.value);
-                        router.push(`/line?${newParams.toString()}`);
-                      }
-                    }}
-                  />
-                </div>
-                <ul className="space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
-                  {filteredContacts.map((contact) => (
-                    <li
+              <CardContent className="overflow-y-auto h-[calc(100vh-8rem)]">
+                {contacts.length > 0 ? (
+                  contacts.map((contact) => (
+                    <div
                       key={contact.userId}
-                      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer ${
-                        contact.unreadCount > 0 
-                          ? 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500' 
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      } ${selectedContact?.userId === contact.userId ? 'ring-2 ring-blue-500' : ''}`}
+                      className={`flex items-center p-3 rounded-lg mb-2 cursor-pointer hover:bg-gray-100 ${
+                        selectedContact?.userId === contact.userId
+                          ? 'bg-blue-50 border-l-4 border-blue-500'
+                          : ''
+                      }`}
                       onClick={() => handleContactClick(contact)}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 bg-blue-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+                        {contact.pictureUrl ? (
                           <img
-                            src={contact.pictureUrl || 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'}
+                            src={contact.pictureUrl}
                             alt={`${contact.displayName}'s profile`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -393,27 +367,36 @@ const LinePage: React.FC = () => {
                               target.onerror = null;
                             }}
                           />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{contact.displayName}</p>
-                          <p className="text-sm text-gray-500 truncate">{contact.lastMessage}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end ml-2">
-                        {contact.lastMessageAt && (
-                          <p className="text-xs text-gray-400 flex-shrink-0">
-                            {new Date(contact.lastMessageAt).toLocaleDateString()} {new Date(contact.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                        ) : (
+                          <span className="text-white text-lg">{contact.displayName.charAt(0)}</span>
                         )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-medium truncate">{contact.displayName}</h3>
+                          {contact.lastMessageAt && (
+                            <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
+                              {new Date(contact.lastMessageAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">{contact.lastMessage}</p>
                         {contact.unreadCount > 0 && (
-                          <div className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 mt-1">
-                            {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
-                          </div>
+                          <span className="inline-block bg-red-500 text-white text-xs rounded-full px-2 py-1 mt-1">
+                            {contact.unreadCount}
+                          </span>
                         )}
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 mt-8">
+                    <p>No contacts found</p>
+                    <p className="text-sm mt-2">
+                      Add your LINE Official Account to get started
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -571,6 +554,19 @@ const LinePage: React.FC = () => {
         </div>
       )}
     </>
+  );
+}
+
+// Main component with Suspense boundary
+const LinePage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <LinePageContent />
+    </Suspense>
   );
 };
 
