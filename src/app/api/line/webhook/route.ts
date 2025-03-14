@@ -17,8 +17,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log('LINE webhook payload:', JSON.stringify(body, null, 2));
 
+    // If events array is empty, just return 200 OK
     if (!body.events || !Array.isArray(body.events) || body.events.length === 0) {
-      return NewResponse(400, null, 'Invalid webhook format');
+      console.log('Received empty events array or ping from LINE');
+      return NewResponse(200, null, null);
     }
 
     await connectMongoDB();
