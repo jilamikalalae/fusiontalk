@@ -2,6 +2,8 @@ import { ILineRepository } from '@/repositories/line/ILineRepository';
 import { IUserRepository } from '@/repositories/user/IUserRepository';
 import { NewResponse } from '@/types/api-response';
 import { NextResponse } from 'next/server';
+import connectMongoDB from '@/lib/mongodb';
+import { LineContact } from '@/models/lineMessage';
 
 export class GetLineMessageByLineId {
   constructor(
@@ -30,13 +32,27 @@ export class GetLineMessageByLineId {
       }
 
       const lineContact = lineContacts[0];
-      const messages = lineContact.messages;
+      
+      // Make a copy of messages to avoid modifying the original
+      const messages = [...lineContact.messages];
+      
+      // Sort messages by creation time (newest first)
       messages.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
-      return NewResponse(200, lineContacts[0].messages, null);
+      // Reset unread count when messages are fetched
+      await connectMongoDB();
+      await LineContact.findOneAndUpdate(
+        {
+          incomingLineId: incomingLineId,
+          outgoingLineId: user.lineToken.userId
+        },
+        { $set: { unreadCount: 0 } }
+      );
+
+      // Return the sorted messages
+      return NewResponse(200, messages, null);
     } catch (e: any) {
       console.log('failed to get line contact by userId: ', e.message);
       return NewResponse(500, null, e.message);

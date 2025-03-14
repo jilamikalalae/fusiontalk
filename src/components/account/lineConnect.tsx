@@ -1,45 +1,32 @@
-import * as React from 'react';
-import { Modal, Box, Typography, TextField, Button } from '@mui/material';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  borderRadius: 4
-};
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/ui/loading-button';
+import LineTutorial from '@/components/tutorials/LineTutorial';
+import { Label } from '@/components/ui/label';
 
 interface LineConnectProps {
+  children: React.ReactNode;
   className?: string;
-  children?: React.ReactNode;
-  onConnectionChange?: (connected: boolean) => void;
-  isConnected?: boolean;
+  onConnectionChange: (isConnected: boolean) => void;
+  isConnected: boolean;
 }
 
-export default function LineConnect({
-  className,
+const LineConnect: React.FC<LineConnectProps> = ({
   children,
+  className,
   onConnectionChange,
   isConnected
-}: LineConnectProps) {
-  const [open, setOpen] = React.useState(false);
-  const [accessToken, setAccessToken] = React.useState('');
-  const [secretToken, setSecretToken] = React.useState('');
-  const [error, setError] = React.useState('');
-  const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
+}) => {
+  const [showForm, setShowForm] = useState(false);
+  const [accessToken, setAccessToken] = useState('');
+  const [secretToken, setSecretToken] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showTutorial, setShowTutorial] = useState(false);
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => {
-    setOpen(false);
-    setAccessToken('');
-    setSecretToken('');
-    setError('');
-    setUnlinkConfirm(false);
-  };
+  const toggleForm = () => setShowForm(!showForm);
+  const toggleTutorial = () => setShowTutorial(!showTutorial);
 
   const handleConnect = async () => {
     if (!accessToken || !secretToken) {
@@ -63,7 +50,7 @@ export default function LineConnect({
       if (onConnectionChange) {
         onConnectionChange(true);
       }
-      handleClose();
+      toggleForm();
     } catch (err) {
       setError('An error occurred. Please try again.');
     }
@@ -84,83 +71,104 @@ export default function LineConnect({
       if (onConnectionChange) {
         onConnectionChange(false);
       }
-      handleClose();
+      toggleForm();
     } catch (err) {
       setError('An error occurred. Please try again.');
     }
   };
 
-  const openUnlinkConfirm = () => setUnlinkConfirm(true);
-
   return (
     <div>
-      <button
-        onClick={handleOpen}
-        className={className || 'px-4 py-2 rounded-lg border-1'}
+      <Button
+        onClick={toggleForm}
+        className={className}
+        variant={isConnected ? 'destructive' : 'outline'}
       >
         {children}
-      </button>
-      <Modal open={open} onClose={handleClose}>
-        <Box sx={style}>
-          {!isConnected ? (
-            <>
-              <Typography variant="h6" component="h2" mb={2}>
-                Connect Line Official Account
-              </Typography>
-              <TextField
-                fullWidth
-                label="Access Token"
-                variant="outlined"
-                margin="normal"
-                value={accessToken}
-                onChange={(e) => setAccessToken(e.target.value)}
-              />
-              <TextField
-                fullWidth
-                label="Secret Token"
-                variant="outlined"
-                margin="normal"
-                value={secretToken}
-                onChange={(e) => setSecretToken(e.target.value)}
-              />
-              {error && <Typography color="error">{error}</Typography>}
-              <Button
-                onClick={handleConnect}
-                variant="contained"
-                color="primary"
-                fullWidth
+      </Button>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Connect LINE Account</h3>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Enter your LINE Channel Access Token and Channel Secret to connect your LINE Official Account.
+              </p>
+              <button 
+                onClick={toggleTutorial}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
               >
-                Connect
-              </Button>
-            </>
-          ) : (
-            <>
-              <Typography variant="h6" component="h2" mb={2}>
-                Unlink Line Official Account
-              </Typography>
-              <Typography mb={3}>
-                Are you sure you want to unlink your Line account?
-              </Typography>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                How to get your LINE tokens?
+              </button>
+            </div>
+            
+            {showTutorial && <LineTutorial />}
+
+            <div className="space-y-4 mt-4">
+              <div className="mb-4">
+                <Label htmlFor="accessToken" className="block text-sm font-medium text-gray-700 mb-1">
+                  Channel Access Token
+                </Label>
+                <Input
+                  id="accessToken"
+                  type="text"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  placeholder="Enter your LINE Channel Access Token"
+                  className="w-full px-4 py-2 mt-1"
+                />
+              </div>
+
+              <div className="mb-4">
+                <Label htmlFor="secretToken" className="block text-sm font-medium text-gray-700 mb-1">
+                  Channel Secret
+                </Label>
+                <Input
+                  id="secretToken"
+                  type="text"
+                  value={secretToken}
+                  onChange={(e) => setSecretToken(e.target.value)}
+                  placeholder="Enter your LINE Channel Secret"
+                  className="w-full px-4 py-2 mt-1"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-3 mt-6">
                 <Button
-                  onClick={handleClose}
-                  variant="outlined"
-                  color="secondary"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    setError('');
+                  }}
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleUnlink}
-                  variant="contained"
-                  color="error"
+                <LoadingButton
+                  onClick={handleConnect}
+                  isLoading={loading}
+                  loadingText="Connecting..."
                 >
-                  Unlink
-                </Button>
+                  Connect
+                </LoadingButton>
               </div>
-            </>
-          )}
-        </Box>
-      </Modal>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default LineConnect;

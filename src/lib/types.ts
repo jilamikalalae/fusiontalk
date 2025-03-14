@@ -14,4 +14,9 @@ export interface Message {
   isUnread?: boolean;
   pictureUrl?: string;
   displayName?: string;
+  messageType: 'user' | 'bot' | string;
+  replyTo?: string;
+  platform?: 'line' | 'messenger';
+  contentType?: 'text' | 'image';
+  imageUrl?: string;
 }

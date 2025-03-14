@@ -1,76 +1,36 @@
-import * as React from 'react';
-import { Modal, Box, Typography, TextField, Button } from '@mui/material';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  borderRadius: 4
-};
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/ui/loading-button';
+import MessengerTutorial from '@/components/tutorials/MessengerTutorial';
+import { Label } from '@/components/ui/label';
 
 interface MessengerConnectProps {
+  children: React.ReactNode;
   className?: string;
-  children?: React.ReactNode;
-  onConnectionChange?: (connected: boolean) => void;
-  isConnected?: boolean;
+  onConnectionChange: (isConnected: boolean) => void;
+  isConnected: boolean;
 }
 
-export default function MessengerConnect({
-  className,
+const MessengerConnect: React.FC<MessengerConnectProps> = ({
   children,
+  className,
   onConnectionChange,
   isConnected
-}: MessengerConnectProps) {
-  const [open, setOpen] = React.useState(false);
-  const [accessToken, setAccessToken] = React.useState('');
-  const [pageId, setPageId] = React.useState('');
-  const [error, setError] = React.useState('');
-  const [unlinkConfirm, setUnlinkConfirm] = React.useState(false);
-  const [connectionTime, setConnectionTime] = React.useState<number | null>(null);
+}) => {
+  const [showForm, setShowForm] = useState(false);
+  const [accessToken, setAccessToken] = useState('');
+  const [pageId, setPageId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showTutorial, setShowTutorial] = useState(false);
 
-  React.useEffect(() => {
-    // Check if there is a saved connection time
-    const savedTime = localStorage.getItem('messengerConnectionTime');
-    if (savedTime) {
-      setConnectionTime(Number(savedTime));
-      checkTokenExpiration(Number(savedTime));
-    }
-  }, []);
-
-  const checkTokenExpiration = (time: number) => {
-    const now = Date.now();
-    const elapsedTime = now - time;
-    const hoursPassed = elapsedTime / (1000 * 60 * 60); // Convert ms to hours
-
-    if (hoursPassed >= 24) {
-      setError('Access token has expired. Please type again.');
-      handleUnlink(); // Automatically unlink if expired
-    }
-  };
-
-  const handleOpen = () => {
-    setOpen(true);
-    if (connectionTime) {
-      checkTokenExpiration(connectionTime);
-    }
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setAccessToken('');
-    setPageId('');
-    setError('');
-    setUnlinkConfirm(false);
-  };
+  const toggleForm = () => setShowForm(!showForm);
+  const toggleTutorial = () => setShowTutorial(!showTutorial);
 
   const handleConnect = async () => {
     if (!accessToken || !pageId) {
-      setError('Both fields are required.');
+      setError('All fields are required.');
       return;
     }
 
@@ -87,14 +47,10 @@ export default function MessengerConnect({
         return;
       }
 
-      // Save connection timestamp
-      localStorage.setItem('messengerConnectionTime', Date.now().toString());
-      setConnectionTime(Date.now());
-
       if (onConnectionChange) {
         onConnectionChange(true);
       }
-      handleClose();
+      toggleForm();
     } catch (err) {
       setError('An error occurred. Please try again.');
     }
@@ -112,14 +68,10 @@ export default function MessengerConnect({
         return;
       }
 
-      // Remove saved connection time
-      localStorage.removeItem('messengerConnectionTime');
-      setConnectionTime(null);
-
       if (onConnectionChange) {
         onConnectionChange(false);
       }
-      handleClose();
+      toggleForm();
     } catch (err) {
       setError('An error occurred. Please try again.');
     }
@@ -127,79 +79,96 @@ export default function MessengerConnect({
 
   return (
     <div>
-      <button
-        onClick={handleOpen}
-        className={className || 'px-4 py-2 rounded-lg border-1'}
+      <Button
+        onClick={toggleForm}
+        className={className}
+        variant={isConnected ? 'destructive' : 'outline'}
       >
         {children}
-      </button>
-      <Modal open={open} onClose={handleClose}>
-        <Box sx={style}>
-          {!isConnected ? (
-            <>
-              <Typography variant="h6" component="h2" mb={2}>
-                Connect Messenger Account
-              </Typography>
-              <Button variant="outlined" href="https://developers.facebook.com/tools/explorer/" target="_blank">
-                Generate Access Token
-              </Button>
+      </Button>
 
-              <TextField
-                fullWidth
-                label="Access Token"
-                variant="outlined"
-                margin="normal"
-                value={accessToken}
-                onChange={(e) => setAccessToken(e.target.value)}
-              />
-
-              <TextField
-                fullWidth
-                label="Page Id"
-                variant="outlined"
-                margin="normal"
-                value={pageId}
-                onChange={(e) => setPageId(e.target.value)}
-              />
-
-              {error && <Typography color="error">{error}</Typography>}
-              <Button
-                onClick={handleConnect}
-                variant="contained"
-                color="primary"
-                fullWidth
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Connect Messenger Account</h3>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Enter your Facebook Page Access Token and Page ID to connect your Messenger account.
+              </p>
+              <button 
+                onClick={toggleTutorial}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
               >
-                Connect
-              </Button>
-            </>
-          ) : (
-            <>
-              <Typography variant="h6" component="h2" mb={2}>
-                Unlink Messenger Account
-              </Typography>
-              <Typography mb={3}>
-                Are you sure you want to unlink your Messenger account?
-              </Typography>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                How to get your Messenger tokens?
+              </button>
+            </div>
+            
+            {showTutorial && <MessengerTutorial />}
+
+            <div className="space-y-4 mt-4">
+              <div className="mb-4">
+                <Label htmlFor="pageId" className="block text-sm font-medium text-gray-700 mb-1">
+                  Page ID
+                </Label>
+                <Input
+                  id="pageId"
+                  type="text"
+                  value={pageId}
+                  onChange={(e) => setPageId(e.target.value)}
+                  placeholder="Enter your Facebook Page ID"
+                  className="w-full px-4 py-2 mt-1"
+                />
+              </div>
+
+              <div className="mb-4">
+                <Label htmlFor="accessToken" className="block text-sm font-medium text-gray-700 mb-1">
+                  Page Access Token
+                </Label>
+                <Input
+                  id="accessToken"
+                  type="text"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  placeholder="Enter your Facebook Page Access Token"
+                  className="w-full px-4 py-2 mt-1"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-3 mt-6">
                 <Button
-                  onClick={handleClose}
-                  variant="outlined"
-                  color="secondary"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    setError('');
+                  }}
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleUnlink}
-                  variant="contained"
-                  color="error"
+                <LoadingButton
+                  onClick={handleConnect}
+                  isLoading={loading}
+                  loadingText="Connecting..."
                 >
-                  Unlink
-                </Button>
+                  Connect
+                </LoadingButton>
               </div>
-            </>
-          )}
-        </Box>
-      </Modal>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default MessengerConnect;

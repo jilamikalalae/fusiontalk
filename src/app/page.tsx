@@ -14,5 +14,9 @@ export default function HomePage() {
     }
   }, [session, router]);
 
-  return null; // Or a loading spinner if you prefer
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <h1 className="text-2xl font-bold mb-4">Welcome to FusionTalk</h1>
+    </div>
+  );
 }
