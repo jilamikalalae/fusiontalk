@@ -35,14 +35,17 @@ export async function upsertMessengerContact(contactData) {
     const contact = await MessengerContact.findOneAndUpdate(
       { userId: contactData.userId, pageId: contactData.pageId },
       {
-        firstName: contactData.firstName,
-        lastName: contactData.lastName,
-        profilePic: contactData.profilePic,
-        lastInteraction: new Date(),
-        lastMessage: contactData.lastMessage,
-        lastMessageAt: new Date()
+        $set: {
+          firstName: contactData.firstName,
+          lastName: contactData.lastName,
+          profilePic: contactData.profilePic,
+          lastInteraction: new Date(),
+          lastMessage: contactData.lastMessage,
+          lastMessageAt: new Date()
+        },
+        $inc: { unreadCount: 1 } // Increment unreadCount atomically
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     return contact;
@@ -51,6 +54,7 @@ export async function upsertMessengerContact(contactData) {
     throw error;
   }
 }
+
 
 export async function getMessengerMessages(userId = null) {
   try {

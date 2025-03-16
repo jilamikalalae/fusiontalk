@@ -11,14 +11,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 // At the top, add type definition
 type ContentType = 'image' | 'text' | undefined;
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     console.log('LINE webhook payload:', JSON.stringify(body, null, 2));
 
-    // If events array is empty, just return 200 OK
-    if (!body.events || !Array.isArray(body.events) || body.events.length === 0) {
+    if (
+      !body.events ||
+      !Array.isArray(body.events) ||
+      body.events.length === 0
+    ) {
       console.log('Received empty events array or ping from LINE');
       return NewResponse(200, null, null);
     }
@@ -26,95 +28,103 @@ export async function POST(req: NextRequest) {
     await connectMongoDB();
 
     for (const event of body.events) {
-      // Skip non-message events
-      if (event.type !== 'message') {
-        console.log(`Skipping non-message event: ${event.type}`);
+      if (event.type !== 'message') continue;
+
+      const user = await User.findOne({ 'lineToken.userId': body.destination });
+
+      if (!user?.lineToken?.accessToken) {
+        console.log('User is not connected with LINE');
         continue;
       }
 
-      // Skip events without required fields
-      if (!event.source?.userId || !event.message || !body.destination) {
-        console.error('Missing required fields in event:', event);
+      const accessToken = DecryptString(
+        user.lineToken.accessToken,
+        user.lineToken.accessTokenIv
+      );
+
+      // Fetch user profile from LINE
+      const profileResponse = await fetch(
+        `https://api.line.me/v2/bot/profile/${event.source.userId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+
+      if (!profileResponse.ok) {
+        console.error('Failed to get LINE profile:', profileResponse.status);
         continue;
       }
 
+      const profile = await profileResponse.json();
+
+      // Determine message type and content
       let messageContent = '';
       let contentType: ContentType = 'text';
       let imageUrl = '';
 
-      // Handle different message types
       if (event.message.type === 'text') {
         messageContent = event.message.text;
       } else if (event.message.type === 'image') {
-        messageContent = 'Sent an image';
         contentType = 'image';
-        
-        // Handle image upload if needed
-        // This is a placeholder - implement actual image handling logic
-        imageUrl = `https://example.com/placeholder-image-${uuidv4()}.jpg`;
+        messageContent = 'Sent an image';
+
+        try {
+          const contentResponse = await fetch(
+            `https://api-data.line.me/v2/bot/message/${event.message.id}/content`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+
+          if (!contentResponse.ok)
+            throw new Error(
+              `Failed to get image content: ${contentResponse.status}`
+            );
+
+          const imageBuffer = await contentResponse.arrayBuffer();
+          const fileName = `line/${body.destination}/${event.source.userId}/${uuidv4()}.jpg`;
+
+          imageUrl = await uploadToS3(
+            Buffer.from(imageBuffer),
+            fileName,
+            'image/jpeg'
+          );
+          console.log('Successfully uploaded LINE image to S3:', imageUrl);
+        } catch (error) {
+          console.error('Error processing LINE image:', error);
+        }
       } else {
         messageContent = `Sent a ${event.message.type}`;
       }
 
-      // Create a basic LINE contact object
-      const lineContact = {
-        incomingLineId: event.source.userId,
-        outgoingLineId: body.destination,
-        displayName: 'LINE User', // Will be updated when profile is fetched
-        profileUrl: 'https://profile.line-scdn.net/0m00000000000000000000000000000000000000000000', // Default
-        statusMessage: '',
-        lastMessage: messageContent,
-        lastMessageAt: new Date(),
-        unreadCount: 1,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      try {
-        // Find existing contact or create new one
-        const existingContact = await LineContact.findOne({
+      // **Atomic Upsert Operation**
+      await LineContact.findOneAndUpdate(
+        {
           incomingLineId: event.source.userId,
           outgoingLineId: body.destination
-        });
-
-        if (existingContact) {
-          // Update existing contact
-          existingContact.lastMessage = messageContent;
-          existingContact.lastMessageAt = new Date();
-          existingContact.unreadCount += 1;
-          existingContact.updatedAt = new Date();
-          
-          // Add message to contact
-          existingContact.messages.push({
-            messageType: MessageType.INCOMING,
-            content: messageContent,
-            createdAt: new Date(),
-            contentType: contentType,
-            imageUrl: imageUrl
-          });
-          
-          await existingContact.save();
-          console.log('Updated existing LINE contact');
-        } else {
-          // Create new contact with first message
-          const newContact = new LineContact(lineContact);
-          newContact.messages.push({
-            messageType: MessageType.INCOMING,
-            content: messageContent,
-            createdAt: new Date(),
-            contentType: contentType,
-            imageUrl: imageUrl
-          });
-          
-          await newContact.save();
-          console.log('Created new LINE contact');
-        }
-      } catch (error) {
-        console.error('Error saving LINE contact:', error);
-      }
+        },
+        {
+          $set: {
+            displayName: profile.displayName,
+            profileUrl: profile.pictureUrl || '',
+            statusMessage: profile.statusMessage || '',
+            lastMessage: messageContent,
+            lastMessageAt: new Date(),
+            updatedAt: new Date()
+          },
+          $inc: { unreadCount: 1 },
+          $push: {
+            messages: {
+              messageType: MessageType.INCOMING,
+              content: messageContent,
+              createdAt: new Date(),
+              contentType,
+              imageUrl: imageUrl || undefined
+            }
+          }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
     }
 
-    // LINE expects a 200 response to confirm receipt
     return NewResponse(200, null, null);
   } catch (error) {
     console.error('Error processing LINE webhook:', error);

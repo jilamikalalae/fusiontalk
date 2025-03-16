@@ -1,6 +1,8 @@
+import { IMessengerContact } from '@/domain/MessengerContact';
 import { IUser } from '@/domain/User';
 import authOptions from '@/lib/authOptions';
 import connectMongoDB from '@/lib/mongodb';
+import MessengerContact from '@/models/messengerContact';
 import MessengerMessage from '@/models/messengerMessage';
 import User from '@/models/user';
 import { NewResponse } from '@/types/api-response';
@@ -26,6 +28,19 @@ export async function GET(
     if (!user?.messengerToken?.accessToken || !user?.messengerToken?.pageId) {
       return NewResponse(409, null, 'user is not connect with meta.');
     }
+
+    const messengerContact = await MessengerContact.findOne({
+      pageId: user.messengerToken.pageId,
+      userId: metaUserId
+    });
+
+    if (!messengerContact) {
+      return NewResponse(404, null, 'Messenger Contact is not found');
+    }
+
+    messengerContact.unreadCount = 0;
+
+    await messengerContact.save();
 
     const query = metaUserId
       ? {

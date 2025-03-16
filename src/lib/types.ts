@@ -16,3 +16,4 @@ export interface Message {
   displayName?: string;
   platform?: 'line' | 'messenger';
 }
+
