@@ -24,7 +24,7 @@ export class SendLineMessage {
 
       const lineContacts = await this.lineRepository.getContactByLineId(
         user.lineToken.userId,
-        req.incomingLineId
+        req.recipientId
       );
 
       if (lineContacts.length == 0) {
@@ -34,7 +34,7 @@ export class SendLineMessage {
       const lineContact = lineContacts[0];
 
       const sendPushMessageRequest: LineSendPushMessageRequest = {
-        to: req.incomingLineId,
+        to: req.recipientId,
         messages: [
           {
             type: 'text',

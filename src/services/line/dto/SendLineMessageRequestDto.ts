@@ -1,5 +1,5 @@
 export interface SendLineMessageRequestDto {
   userId: string;
-  incomingLineId: string;
+  recipientId: string;
   content: string;
 }

@@ -13,53 +13,10 @@ import { DecryptString } from '@/lib/crypto';
 import { upsertMessengerContact } from '@/lib/db';
 import { IMessengerContact } from '@/domain/MessengerContact';
 import MessengerContact from '@/models/messengerContact';
-import { uploadToS3 } from '@/lib/s3';
 
 export async function POST(req: Request) {
   try {
-    // Check if it's a multipart form data (image upload) or JSON
-    const contentType = req.headers.get('content-type') || '';
-    
-    let messageData;
-    let imageBuffer;
-    let imageFileName = '';
-    let imageUrl = '';
-    let requestBody;
-    
-    if (contentType.includes('multipart/form-data')) {
-      // Handle form data with image
-      const formData = await req.formData();
-      messageData = {
-        recipientId: formData.get('recipientId') || formData.get('userId'),
-        content: formData.get('content') || 'Sent an image',
-        contentType: 'image'
-      };
-      
-      const imageFile = formData.get('image') as File;
-      if (!imageFile) {
-        return NewResponse(400, null, 'No image file provided');
-      }
-      
-      imageBuffer = Buffer.from(await imageFile.arrayBuffer());
-      imageFileName = `messenger/${messageData.recipientId}/${v4()}.${imageFile.name.split('.').pop()}`;
-    } else {
-      // Handle regular JSON message
-      messageData = await req.json();
-      
-      // Support multiple parameter names for recipient ID
-      if (messageData.userId && !messageData.recipientId) {
-        messageData.recipientId = messageData.userId;
-      }
-    }
-    
-    // Validate recipient ID
-    if (!messageData.recipientId) {
-      console.error('Missing recipientId in request:', messageData);
-      return NewResponse(400, null, 'Recipient ID is required');
-    }
-    
-    console.log('Sending Meta message to:', messageData.recipientId);
-    
+    const messageData = await req.json();
     await connectMongoDB();
 
     const session = await getServerSession(authOptions as AuthOptions);
@@ -70,63 +27,20 @@ export async function POST(req: Request) {
     const user: IUser | null = await User.findById(session.user.id);
 
     if (!user?.messengerToken?.accessToken || !user?.messengerToken?.pageId) {
-      return NewResponse(409, null, 'User is not connected with Meta.');
+      return NewResponse(409, null, 'user is not connect with meta.');
     }
 
     const accessToken = DecryptString(
       user.messengerToken.accessToken,
       user.messengerToken.accessTokenIv
     );
-    
-    // Check if the contact exists
-    const messengerContact = await MessengerContact.findOne({
-      pageId: user.messengerToken.pageId,
-      userId: messageData.recipientId
-    });
-    
-    if (!messengerContact) {
-      console.error('Messenger contact not found:', messageData.recipientId);
-      return NewResponse(404, null, 'Messenger contact not found');
-    }
-    
-    if (messageData.contentType === 'image' && imageBuffer) {
-      try {
-        // Upload image to S3
-        imageUrl = await uploadToS3(
-          imageBuffer,
-          imageFileName,
-          'image/jpeg'
-        );
-        
-        // Create message with image attachment for Facebook
-        requestBody = {
-          messaging_type: 'RESPONSE',
-          recipient: { id: messageData.recipientId },
-          message: {
-            attachment: {
-              type: 'image',
-              payload: {
-                url: imageUrl,
-                is_reusable: true
-              }
-            }
-          }
-        };
-      } catch (error) {
-        console.error('Error uploading image to S3:', error);
-        return NewResponse(500, null, 'Failed to upload image to S3');
-      }
-    } else {
-      // Regular text message
-      requestBody = {
-        messaging_type: 'RESPONSE',
-        recipient: { id: messageData.recipientId },
-        message: { text: messageData.content }
-      };
-    }
 
-    console.log('Meta API request body:', JSON.stringify(requestBody));
-    
+    const requestBody = {
+      messaging_type: 'RESPONSE',
+      recipient: { id: messageData.recipientId },
+      message: { text: messageData.content }
+    };
+
     const response = await fetch(
       `https://graph.facebook.com/v18.0/me/messages?access_token=${accessToken}`,
       {
@@ -139,20 +53,11 @@ export async function POST(req: Request) {
     );
 
     const data = await response.json();
+
     console.log('Facebook API full response:', data);
 
     if (!response.ok) {
-      // Check for token expiration
-      if (data.error && data.error.code === 190) {
-        return NewResponse(401, null, 'Your Facebook access token has expired. Please reconnect your Meta account.');
-      }
-      
-      // Check for user not found error
-      if (data.error && data.error.code === 100 && data.error.error_subcode === 2018001) {
-        return NewResponse(404, null, 'User not found on Facebook. They may have blocked your page or deleted their account.');
-      }
-      
-      return NewResponse(502, null, data.error?.message || 'Unknown Facebook API error');
+      return NewResponse(502, null, data.error);
     }
 
     const newMessage: IMessengerMessage = {
@@ -163,21 +68,36 @@ export async function POST(req: Request) {
       content: messageData.content,
       messageId: v4(),
       timestamp: new Date(),
-      isRead: true,
-      contentType: messageData.contentType || 'text',
-      imageUrl: imageUrl || undefined
+      isRead: true
     };
 
     await MessengerMessage.create(newMessage);
 
-    // Update the contact's last message
-    messengerContact.lastMessage = messageData.contentType === 'image' ? 'Sent an image' : messageData.content;
-    messengerContact.lastMessageAt = new Date();
-    await messengerContact.save();
+    const messengerContact: IMessengerContact | null =
+      await MessengerContact.findOne({
+        pageId: user.messengerToken.pageId,
+        userId: messageData.recipientId
+      });
 
-    return NewResponse(200, { messageId: newMessage.messageId }, null);
+    if (!messengerContact) {
+      return NewResponse(404, null, 'messenger contact is not found');
+    }
+
+    await upsertMessengerContact({
+      userId: messageData.recipientId,
+      pageId: user.messengerToken.pageId,
+      firstName: messengerContact.firstName,
+      lastName: messengerContact.lastName,
+      profilePic: messengerContact.profilePic,
+      lastMessage: messageData.content
+    });
+
+    return NewResponse(200, null, null);
   } catch (error) {
-    console.error('Error sending message:', error);
-    return NewResponse(500, null, 'Internal server error');
+    console.error('Error storing message:', error);
+    return NextResponse.json(
+      { error: 'Failed to store message' },
+      { status: 500 }
+    );
   }
 }

@@ -10,7 +10,8 @@ const messengerContactSchema = new Schema<IMessengerContact>(
     profilePic: { type: String },
     lastInteraction: { type: Date, default: Date.now },
     lastMessageAt: { type: Date, default: Date.now },
-    lastMessage: { type: String }
+    lastMessage: { type: String },
+    unreadCount: { type: Number, default: 0 }
   },
   { timestamps: true }
 );

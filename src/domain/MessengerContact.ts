@@ -7,4 +7,5 @@ export interface IMessengerContact {
   lastInteraction: Date;
   lastMessage: String;
   lastMessageAt: Date;
+  unreadCount: number;
 }

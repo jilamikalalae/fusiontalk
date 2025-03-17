@@ -34,4 +34,12 @@ export class UserRepository implements IUserRepository {
       throw new Error('failed to get user by id');
     }
   }
+
+  async findByEmail(email: string) {
+    return await User.findOne({ email });
+  }
+
+  async findAll() {
+    return await User.find();
+  }
 }
