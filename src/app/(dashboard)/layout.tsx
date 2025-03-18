@@ -76,7 +76,7 @@ function DesktopNav() {
           label="Messenger" 
           isActive={pathname === '/messenger'}
         >
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png" className="h-5 w-5" alt="Messenger logo" />
+          <img src="https://static-00.iconduck.com/assets.00/fb-messenger-icon-2048x2048-03u1m2s0.png" className="h-5 w-5" alt="Messenger logo" />
         </NavItemWithActive>
 
         <NavItemWithActive 
