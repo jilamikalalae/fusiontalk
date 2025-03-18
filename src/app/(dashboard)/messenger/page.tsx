@@ -415,9 +415,9 @@ function MessengerPageContent() {
         >
           <Card className="h-full border-0 md:border rounded-none md:rounded-lg">
             <CardHeader className="pb-2">
-              <CardTitle>LINE Contacts</CardTitle>
+              <CardTitle>Messenger contacts</CardTitle>
               <CardDescription>
-                Your LINE contacts will appear here
+                Your Messenger contacts will appear here
               </CardDescription>
             </CardHeader>
             <CardContent className="overflow-y-auto h-[calc(100vh-8rem)]">
@@ -442,28 +442,38 @@ function MessengerPageContent() {
                     onClick={() => handleContactClick(contact)}
                   >
                     <div className="w-12 h-12 bg-blue-500 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
-                      {contact.profilePic ? (
-                        <img
-                          src={contact.profilePic}
-                          alt={`${contact.firstName}'s profile`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src =
-                              'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
-                            target.onerror = null;
-                          }}
-                        />
+                      {contact.firstName ? (
+                        contact.profilePic ? (
+                          <img
+                            src={contact.profilePic}
+                            alt={`${contact.firstName}'s profile`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
+                              target.onerror = null;
+                            }}
+                          />
+                        ) : (
+                          <span className="text-white text-lg">
+                            {contact?.firstName?.charAt(0) ?? 'N'}
+                          </span>
+                        )
                       ) : (
-                        <span className="text-white text-lg">
-                          {contact.firstName.charAt(0)}
-                        </span>
+                        <img
+                          src="https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png"
+                          alt="Guest profile"
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
                         <h3 className="font-medium truncate">
-                          {contact.firstName}
+                          {contact.firstName
+                            ? `${contact.firstName} ${contact.lastName || ''}`
+                            : 'Guest'}
                         </h3>
                         {contact.lastMessageAt && (
                           <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
@@ -546,14 +556,18 @@ function MessengerPageContent() {
                         }}
                       />
                     ) : (
-                      <span className="text-white text-xs">
-                        {selectedContact.profilePic.charAt(0)}
-                      </span>
+                      <img
+                        src="https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png"
+                        alt="Guest profile"
+                        className="w-full h-full object-cover"
+                      />
                     )}
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-xl font-bold truncate">
-                      {selectedContact.firstName}
+                      {selectedContact.firstName
+                        ? `${selectedContact.firstName} ${selectedContact.lastName || ''}`
+                        : 'Guest'}
                     </h2>
                   </div>
                 </div>

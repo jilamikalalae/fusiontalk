@@ -41,6 +41,8 @@ export async function POST(req: Request) {
       message: { text: messageData.content }
     };
 
+    console.log(requestBody)
+
     const response = await fetch(
       `https://graph.facebook.com/v18.0/me/messages?access_token=${accessToken}`,
       {
@@ -51,6 +53,8 @@ export async function POST(req: Request) {
         body: JSON.stringify(requestBody)
       }
     );
+
+    
 
     const data = await response.json();
 

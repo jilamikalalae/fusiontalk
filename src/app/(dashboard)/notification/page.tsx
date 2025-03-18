@@ -221,8 +221,7 @@ const NotificationPageContent: React.FC = () => {
 
     const messageData = {
       content: inputMessage,
-      recipientId:
-        selectedContact.source === 'line' ? selectedContact.id : undefined
+      recipientId: selectedContact.id
     };
 
     try {
