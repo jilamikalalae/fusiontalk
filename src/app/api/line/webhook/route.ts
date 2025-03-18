@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
 
     for (const event of body.events) {
       if (event.type !== 'message') continue;
+      if (event.deliveryContext.isRedelivery ) continue;
 
       const user = await User.findOne({ 'lineToken.userId': body.destination });
 
