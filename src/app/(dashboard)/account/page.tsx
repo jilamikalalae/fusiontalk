@@ -30,6 +30,11 @@ const AccountManagementPage: React.FC = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Add state for unlink modals
+  const [isLineUnlinkModalOpen, setIsLineUnlinkModalOpen] = useState(false);
+  const [isMessengerUnlinkModalOpen, setIsMessengerUnlinkModalOpen] = useState(false);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -125,6 +130,51 @@ const AccountManagementPage: React.FC = () => {
       console.error('Error deleting account:', error);
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
+    }
+  };
+
+  // Add unlink handlers
+  const handleUnlinkLine = async () => {
+    try {
+      setIsUnlinking(true);
+      const response = await fetch('/api/users/line-connect', {
+        method: 'PUT'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to unlink LINE account');
+      }
+
+      handleConnectionLine(false);
+      setIsLineUnlinkModalOpen(false);
+    } catch (error) {
+      console.error('Error unlinking LINE account:', error);
+      // Show error in UI if needed
+    } finally {
+      setIsUnlinking(false);
+    }
+  };
+
+  const handleUnlinkMessenger = async () => {
+    try {
+      setIsUnlinking(true);
+      const response = await fetch('/api/users/messenger-connect', {
+        method: 'PUT'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to unlink Messenger account');
+      }
+
+      handleConnectionMessenger(false);
+      setIsMessengerUnlinkModalOpen(false);
+    } catch (error) {
+      console.error('Error unlinking Messenger account:', error);
+      // Show error in UI if needed
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
@@ -238,10 +288,16 @@ const AccountManagementPage: React.FC = () => {
                 <LineConnect
                   className={`px-4 py-2 rounded-lg border-2 text-center ${
                     userProfile.isLineConnected
-                      ? 'border-red-500 text-red-500 bg-white'
-                      : 'border-gray-300 text-gray-700 bg-white'
+                      ? 'border-red-500 text-red-500 bg-white hover:bg-red-50'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
                   }`}
-                  onConnectionChange={handleConnectionLine}
+                  onConnectionChange={(isConnected) => {
+                    if (!isConnected) {
+                      setIsLineUnlinkModalOpen(true);
+                    } else {
+                      handleConnectionLine(true);
+                    }
+                  }}
                   isConnected={userProfile.isLineConnected}
                 >
                   {userProfile.isLineConnected ? 'Unlink' : 'Link'}
@@ -258,10 +314,16 @@ const AccountManagementPage: React.FC = () => {
                 <MessengerConnect
                   className={`px-4 py-2 rounded-lg border-2 text-center ${
                     userProfile.isMessengerConnected
-                      ? 'border-red-500 text-red-500 bg-white'
-                      : 'border-gray-300 text-gray-700 bg-white'
+                      ? 'border-red-500 text-red-500 bg-white hover:bg-red-50'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
                   }`}
-                  onConnectionChange={handleConnectionMessenger}
+                  onConnectionChange={(isConnected) => {
+                    if (!isConnected) {
+                      setIsMessengerUnlinkModalOpen(true);
+                    } else {
+                      handleConnectionMessenger(true);
+                    }
+                  }}
                   isConnected={userProfile.isMessengerConnected}
                 >
                   {userProfile.isMessengerConnected ? 'Unlink' : 'Link'}
@@ -329,6 +391,62 @@ const AccountManagementPage: React.FC = () => {
                   disabled={deleteConfirmation !== userProfile.email || isDeleting}
                 >
                   {isDeleting ? 'Deleting...' : 'Delete Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LINE Unlink Modal */}
+        {isLineUnlinkModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold mb-4">Unlink LINE Account</h3>
+              <p className="mb-6 text-gray-700">
+                Are you sure you want to unlink your LINE account? You will no longer be able to receive or send messages through LINE until you link it again.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setIsLineUnlinkModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  disabled={isUnlinking}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUnlinkLine}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300"
+                  disabled={isUnlinking}
+                >
+                  {isUnlinking ? 'Unlinking...' : 'Unlink'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Messenger Unlink Modal */}
+        {isMessengerUnlinkModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold mb-4">Unlink Messenger Account</h3>
+              <p className="mb-6 text-gray-700">
+                Are you sure you want to unlink your Messenger account? You will no longer be able to receive or send messages through Messenger until you link it again.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setIsMessengerUnlinkModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  disabled={isUnlinking}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUnlinkMessenger}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300"
+                  disabled={isUnlinking}
+                >
+                  {isUnlinking ? 'Unlinking...' : 'Unlink'}
                 </button>
               </div>
             </div>

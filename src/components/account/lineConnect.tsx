@@ -25,7 +25,14 @@ const LineConnect: React.FC<LineConnectProps> = ({
   const [error, setError] = useState('');
   const [showTutorial, setShowTutorial] = useState(false);
 
-  const toggleForm = () => setShowForm(!showForm);
+  const toggleForm = () => {
+    if (isConnected) {
+      handleUnlink();
+    } else {
+      setShowForm(!showForm);
+    }
+  };
+  
   const toggleTutorial = () => setShowTutorial(!showTutorial);
 
   const handleConnect = async () => {
@@ -34,6 +41,7 @@ const LineConnect: React.FC<LineConnectProps> = ({
       return;
     }
 
+    setLoading(true);
     try {
       const response = await fetch('/api/users/line-connect', {
         method: 'POST',
@@ -50,13 +58,18 @@ const LineConnect: React.FC<LineConnectProps> = ({
       if (onConnectionChange) {
         onConnectionChange(true);
       }
-      toggleForm();
+      setShowForm(false);
+      setAccessToken('');
+      setSecretToken('');
     } catch (err) {
       setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUnlink = async () => {
+    setLoading(true);
     try {
       const response = await fetch('/api/users/line-connect', {
         method: 'PUT'
@@ -71,9 +84,10 @@ const LineConnect: React.FC<LineConnectProps> = ({
       if (onConnectionChange) {
         onConnectionChange(false);
       }
-      toggleForm();
     } catch (err) {
       setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -25,7 +25,14 @@ const MessengerConnect: React.FC<MessengerConnectProps> = ({
   const [error, setError] = useState('');
   const [showTutorial, setShowTutorial] = useState(false);
 
-  const toggleForm = () => setShowForm(!showForm);
+  const toggleForm = () => {
+    if (isConnected) {
+      handleUnlink();
+    } else {
+      setShowForm(!showForm);
+    }
+  };
+  
   const toggleTutorial = () => setShowTutorial(!showTutorial);
 
   const handleConnect = async () => {
@@ -34,6 +41,7 @@ const MessengerConnect: React.FC<MessengerConnectProps> = ({
       return;
     }
 
+    setLoading(true);
     try {
       const response = await fetch('/api/users/messenger-connect', {
         method: 'POST',
@@ -50,13 +58,18 @@ const MessengerConnect: React.FC<MessengerConnectProps> = ({
       if (onConnectionChange) {
         onConnectionChange(true);
       }
-      toggleForm();
+      setShowForm(false);
+      setAccessToken('');
+      setPageId('');
     } catch (err) {
       setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUnlink = async () => {
+    setLoading(true);
     try {
       const response = await fetch('/api/users/messenger-connect', {
         method: 'PUT'
@@ -71,9 +84,10 @@ const MessengerConnect: React.FC<MessengerConnectProps> = ({
       if (onConnectionChange) {
         onConnectionChange(false);
       }
-      toggleForm();
     } catch (err) {
       setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
