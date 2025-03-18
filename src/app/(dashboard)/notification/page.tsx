@@ -337,42 +337,99 @@ const NotificationPageContent: React.FC = () => {
                 <ul className="space-y-3">
                   {filteredContacts.map((contact) => (
                     <li
-                      key={contact.id}
+                      key={`${contact.source}-${contact.id}`}
                       onClick={() => handleContactClick(contact)}
-                      className="flex items-start p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                        contact.unreadCount > 0
+                          ? 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500'
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      } ${selectedContact?.id === contact.id ? 'ring-2 ring-blue-500' : ''}`}
                     >
-                      <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
-                        <img
-                          src={contact.pictureUrl || 'default-avatar-url'}
-                          alt={contact.displayName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
-                          }}
-                        />
+                      <div className="flex items-center">
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                            <img
+                              src={
+                                contact.pictureUrl ||
+                                'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'
+                              }
+                              alt={`${contact.displayName}'s profile`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src =
+                                  'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
+                                target.onerror = null;
+                              }}
+                            />
+                          </div>
+                          <div
+                            className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${
+                              contact.source === 'line'
+                                ? 'bg-green-500'
+                                : 'bg-blue-600'
+                            } flex items-center justify-center`}
+                          >
+                            {contact.source === 'line' ? (
+                              <img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png"
+                                alt="Line"
+                                className="w-3 h-3"
+                              />
+                            ) : (
+                              <img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png"
+                                alt="Messenger"
+                                className="w-3 h-3"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="ml-4 flex-1 min-w-0">
+                          <div className="flex justify-between">
+                            <h3 className="font-medium truncate">
+                              {contact.displayName}
+                            </h3>
+                          </div>
+
+                          {contact.statusMessage && (
+                            <p className="text-xs text-gray-400 truncate">
+                              {contact.statusMessage}
+                            </p>
+                          )}
+
+                          {contact.lastMessage && (
+                            <p className="text-sm text-gray-600 truncate">
+                              {contact.lastMessage}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline">
-                          <h3 className="font-medium truncate max-w-[150px]">
-                            {contact.displayName}
-                          </h3>
-                          {contact.lastMessageAt && (
-                            <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                              {new Date(contact.lastMessageAt).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center mt-1">
-                          <p className="text-sm text-gray-600 truncate max-w-[180px]">
-                            {contact.lastMessage}
-                          </p>
-                          {contact.unreadCount > 0 && (
-                            <span className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 ml-2 flex-shrink-0">
-                              {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
-                            </span>
-                          )}
-                        </div>
+
+                      <div className="flex flex-col items-end ml-2">
+                        {contact.lastMessageAt && (
+                          <span className="text-xs text-gray-500">
+                            {new Date(contact.lastMessageAt).toLocaleString(
+                              'en-US',
+                              {
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                hour12: true,
+                                month: 'short',
+                                day: 'numeric'
+                              }
+                            )}
+                          </span>
+                        )}
+
+                        {contact.unreadCount > 0 && (
+                          <div className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 mt-1">
+                            {contact.unreadCount > 99
+                              ? '99+'
+                              : contact.unreadCount}
+                          </div>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -425,7 +482,7 @@ const NotificationPageContent: React.FC = () => {
                     </svg>
                   </button>
 
-                  <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+                  <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden mr-3 relative">
                     <img
                       src={
                         selectedContact.pictureUrl ||
@@ -516,17 +573,23 @@ const NotificationPageContent: React.FC = () => {
 
                 {/* Input Box */}
                 <div className="flex items-center space-x-3 border-t p-4">
-                  <input
+                  <Input
                     type="text"
                     placeholder="Type your message..."
-                    className="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1"
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyDown={(e) => {
+                    onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSendMessage();
                       }
                     }}
+                  />
+                  <ImageUploadButton
+                    selectedContact={selectedContact}
+                    onImageUpload={handleNewImage}
+                    onError={handleImageError}
+                    source={selectedContact.source}
                   />
                   <button
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
