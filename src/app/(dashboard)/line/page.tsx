@@ -13,6 +13,7 @@ import Modal from '@/components/account/modal';
 import { format } from 'date-fns';
 import ImageUploadButton from '@/components/line/ImageUploadButton';
 import ImageModal from '@/components/ImageModal';
+import PlatformConnectModal from '@/components/account/PlatformConnectModal';
 
 // Add new interface for Line Contact
 interface LineContact {
@@ -44,6 +45,7 @@ function LinePageContent() {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   // Function to fetch all contacts
   const fetchContacts = async () => {
@@ -257,6 +259,24 @@ function LinePageContent() {
     contact.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Add connection check
+  useEffect(() => {
+    const checkLineConnection = async () => {
+      try {
+        const response = await fetch('/api/users/v2');
+        const userData = await response.json();
+
+        if (!userData.isLineConnected) {
+          setShowConnectModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking LINE connection:', error);
+      }
+    };
+
+    checkLineConnection();
+  }, []);
+
   if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -271,6 +291,11 @@ function LinePageContent() {
 
   return (
     <>
+      <PlatformConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        platform="LINE"
+      />
       <Modal
         isOpen={isModalOpen}
         title="Messenger Connection Required"

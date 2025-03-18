@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingButton } from '@/components/ui/loading-button';
 import MessengerTutorial from '@/components/tutorials/MessengerTutorial';
 import { Label } from '@/components/ui/label';
+import PlatformConnectModal from './PlatformConnectModal';
 
 interface MessengerConnectProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ const MessengerConnect: React.FC<MessengerConnectProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   const toggleForm = () => {
     if (isConnected) {
@@ -181,6 +183,12 @@ const MessengerConnect: React.FC<MessengerConnectProps> = ({
           </div>
         </div>
       )}
+
+      <PlatformConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        platform="Messenger"
+      />
     </div>
   );
 };

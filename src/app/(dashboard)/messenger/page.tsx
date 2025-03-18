@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import ImageModal from '@/components/ImageModal';
 import ImageUploadButton from '@/components/meta/ImageUploadButton';
+import PlatformConnectModal from '@/components/account/PlatformConnectModal';
 
 interface Participant {
   userId: string;
@@ -78,8 +79,9 @@ function MessengerPageContent() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
-  // Check Messenger connection first
+  // Update Messenger connection check
   useEffect(() => {
     const checkMessengerConnection = async () => {
       try {
@@ -87,12 +89,10 @@ function MessengerPageContent() {
         const userData = await response.json();
 
         if (!userData.isMessengerConnected) {
-          setIsModalOpen(true);
-          setLoading(false);
-          return;
+          setShowConnectModal(true);
         }
 
-        setIsConnected(true);
+        setIsConnected(userData.isMessengerConnected);
         setLoading(false);
       } catch (error) {
         console.error('Error checking Messenger connection:', error);
@@ -390,6 +390,11 @@ function MessengerPageContent() {
 
   return (
     <>
+      <PlatformConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        platform="Messenger"
+      />
       <Modal
         isOpen={isModalOpen}
         title="Messenger Connection Required"

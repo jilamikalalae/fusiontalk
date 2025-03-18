@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingButton } from '@/components/ui/loading-button';
 import LineTutorial from '@/components/tutorials/LineTutorial';
 import { Label } from '@/components/ui/label';
+import PlatformConnectModal from './PlatformConnectModal';
 
 interface LineConnectProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ const LineConnect: React.FC<LineConnectProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   const toggleForm = () => {
     if (isConnected) {
@@ -181,6 +183,12 @@ const LineConnect: React.FC<LineConnectProps> = ({
           </div>
         </div>
       )}
+
+      <PlatformConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        platform="LINE"
+      />
     </div>
   );
 };
