@@ -188,7 +188,7 @@ const NotificationPageContent: React.FC = () => {
         messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
         userId: contact.id,
         replyTo: contact.id,
-        createdAt: msg.createdAt || new Date().toISOString(),
+        createdAt: msg.createdAt || msg.timestamp || new Date().toISOString(),
         contentType: msg.contentType || 'text',
         imageUrl: msg.imageUrl || undefined
       }));
@@ -531,7 +531,7 @@ const NotificationPageContent: React.FC = () => {
                                   : 'text-gray-500'
                               }`}
                             >
-                              {new Date(message.createdAt).toLocaleString()}
+                              {format(new Date(message.createdAt), 'h:mm a')}
                             </div>
                           </div>
                         </div>
