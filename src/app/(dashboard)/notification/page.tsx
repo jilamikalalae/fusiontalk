@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import ImageUploadButton from '@/components/notification/ImageUploadButton';
+import { format } from 'date-fns';
 
 interface Contact {
   id: string;
@@ -187,7 +188,7 @@ const NotificationPageContent: React.FC = () => {
         messageType: msg.messageType === 'INCOMING' ? 'user' : 'bot',
         userId: contact.id,
         replyTo: contact.id,
-        createdAt: msg.createdAt || new Date().toISOString(),
+        createdAt: msg.createdAt || msg.timestamp || new Date().toISOString(),
         contentType: msg.contentType || 'text',
         imageUrl: msg.imageUrl || undefined
       }));
@@ -334,111 +335,82 @@ const NotificationPageContent: React.FC = () => {
 
             <CardContent className="overflow-y-auto max-h-[calc(100vh-220px)]">
               {filteredContacts.length > 0 ? (
-                <ul className="space-y-3">
-                  {filteredContacts.map((contact) => (
-                    <li
-                      key={`${contact.source}-${contact.id}`}
-                      onClick={() => handleContactClick(contact)}
-                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                        contact.unreadCount > 0
-                          ? 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      } ${selectedContact?.id === contact.id ? 'ring-2 ring-blue-500' : ''}`}
-                    >
-                      <div className="flex items-center">
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                filteredContacts.map((contact) => (
+                  <div
+                    key={`${contact.source}-${contact.id}`}
+                    onClick={() => handleContactClick(contact)}
+                    className={`flex items-center p-3 rounded-lg mb-1 cursor-pointer hover:bg-gray-100 ${
+                      selectedContact?.id === contact.id
+                        ? 'bg-blue-50 border-l-4 border-blue-500'
+                        : ''
+                    }`}
+                  >
+                    <div className="relative w-12 h-12 rounded-full flex-shrink-0 mr-3">
+                      <img
+                        src={
+                          contact.pictureUrl ||
+                          'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'
+                        }
+                        alt={`${contact.displayName}'s profile`}
+                        className="w-full h-full rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src =
+                            'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
+                          target.onerror = null;
+                        }}
+                      />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center">
+                        {contact.source === 'line' ? (
+                          <div className="bg-white rounded-full w-6 h-6 flex items-center justify-center p-0.5 shadow-sm">
                             <img
-                              src={
-                                contact.pictureUrl ||
-                                'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png'
-                              }
-                              alt={`${contact.displayName}'s profile`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src =
-                                  'https://miro.medium.com/v2/resize:fit:720/1*W35QUSvGpcLuxPo3SRTH4w.png';
-                                target.onerror = null;
-                              }}
+                              src="https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png"
+                              alt="LINE"
+                              className="w-full h-full rounded-full"
                             />
                           </div>
-                          <div
-                            className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${
-                              contact.source === 'line'
-                                ? 'bg-green-500'
-                                : 'bg-blue-600'
-                            } flex items-center justify-center`}
-                          >
-                            {contact.source === 'line' ? (
-                              <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/LINE_logo.svg/640px-LINE_logo.svg.png"
-                                alt="Line"
-                                className="w-3 h-3"
-                              />
-                            ) : (
-                              <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/1200px-Facebook_Messenger_logo_2020.svg.png"
-                                alt="Messenger"
-                                className="w-3 h-3"
-                              />
-                            )}
+                        ) : (
+                          <div className="bg-white rounded-full w-6 h-6 flex items-center justify-center p-0.5 shadow-sm">
+                            <img
+                              src="https://static-00.iconduck.com/assets.00/fb-messenger-icon-2048x2048-03u1m2s0.png"
+                              alt="Messenger"
+                              className="w-full h-full rounded-full"
+                            />
                           </div>
-                        </div>
-
-                        <div className="ml-4 flex-1 min-w-0">
-                          <div className="flex justify-between">
-                            <h3 className="font-medium truncate">
-                              {contact.displayName}
-                            </h3>
-                          </div>
-
-                          {contact.statusMessage && (
-                            <p className="text-xs text-gray-400 truncate">
-                              {contact.statusMessage}
-                            </p>
-                          )}
-
-                          {contact.lastMessage && (
-                            <p className="text-sm text-gray-600 truncate">
-                              {contact.lastMessage}
-                            </p>
-                          )}
-                        </div>
+                        )}
                       </div>
-
-                      <div className="flex flex-col items-end ml-2">
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-medium truncate">
+                          {contact.displayName}
+                        </h3>
                         {contact.lastMessageAt && (
-                          <span className="text-xs text-gray-500">
-                            {new Date(contact.lastMessageAt).toLocaleString(
-                              'en-US',
-                              {
-                                hour: 'numeric',
-                                minute: 'numeric',
-                                hour12: true,
-                                month: 'short',
-                                day: 'numeric'
-                              }
-                            )}
+                          <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
+                            {format(new Date(contact.lastMessageAt), 'M/d, h:mm a')}
                           </span>
                         )}
-
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm text-gray-600 truncate">
+                          {contact.lastMessage || ''}
+                        </p>
                         {contact.unreadCount > 0 && (
-                          <div className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 mt-1">
+                          <span className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1 ml-2">
                             {contact.unreadCount > 99
                               ? '99+'
                               : contact.unreadCount}
-                          </div>
+                          </span>
                         )}
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center text-gray-500 mt-8">
                   <p>No contacts found</p>
                   {activeTab !== 'all' && (
-                    <p className="mt-2 text-sm">
+                    <p className="text-sm mt-2">
                       Try connecting your{' '}
                       {activeTab === 'line' ? 'Line' : 'Messenger'} account in
                       the account settings
@@ -559,7 +531,7 @@ const NotificationPageContent: React.FC = () => {
                                   : 'text-gray-500'
                               }`}
                             >
-                              {new Date(message.createdAt).toLocaleString()}
+                              {format(new Date(message.createdAt), 'h:mm a')}
                             </div>
                           </div>
                         </div>
