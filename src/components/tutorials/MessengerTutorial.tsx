@@ -23,11 +23,11 @@ const MessengerTutorial: React.FC = () => {
         <ol className="list-decimal pl-5 text-sm text-blue-800 space-y-1">
           <li>Go to <a href="https://developers.facebook.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Facebook for Developers</a></li>
           <li>Log in with your Facebook account</li>
-          <li>Go to "My Apps" and select your app (or create a new one)</li>
-          <li>Navigate to "Settings" {'>'} "Basic" to find your App ID</li>
-          <li>Go to "Messenger" {'>'} "Settings" and scroll to "Access Tokens"</li>
-          <li>Generate a token for your Facebook Page</li>
-          <li>Your Page ID can be found in your Facebook Page URL: facebook.com/your_page_name/</li>
+          <li>Choose your app that related to your page</li>
+          <li>Navigate to "Messenger" {'>'} "Messenger Api Settings" to find your page ID and token</li>
+          <li>On the second setup, expand the setup and you will see the page ID and generate button</li>
+          <li>Grab the ID and generate a token for your Facebook Page</li>
+          <li>Your Page ID can be found in your Facebook Page URL: facebook.com/your_page_name/ too</li>
         </ol>
       </div>
       
